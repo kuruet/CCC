@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@theme{
+  --color-primary: #F84565;
+  --color-primary-dull: #D63854;
+}
+*{
+  font-family: "Outfit", sans-serif;
+}
+
+body{
+  color: white;
+  background-color: #fff5df;
+}
+
+.no-scrollbar{
+  scrollbar-width: none;
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+}
+
+::-webkit-calendar-picker-indicator{
+  filter: invert(1);
+}
+
+
+/* ClientMarquee / marquee animation - place in src/index.css */
+
+/* Keyframes for right -> left motion (translate -50% to scroll one full set) */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); } /* -50% moves exactly one set (because track is 200%) */
+}
+
+/* Marquee track: duplicated images must fill 200% of container width */
+.marquee-track {
+  display: flex;
+  width: 200%;                 /* IMPORTANT: makes first set + duplicate set = 200% */
+  gap: 1.5rem;                 /* gap between slides (same as Tailwind gap-6) */
+  animation: marquee 12s linear infinite;
+  will-change: transform;
+}
+
+/* Pause helper */
+.marquee-track-paused {
+  animation-play-state: paused !important;
+}
+
+/* Make sure list style doesn't show bullets */
+.marquee-track,
+.marquee-track li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Slide sizing: desktop = 3 visible items => each item is 1/3 of the visible viewport */
+.marquee-track > li {
+  flex: 0 0 calc(100% / 3); /* 3 columns on desktop */
+}
+
+/* Mobile: each slide occupy full viewport width */
+@media (max-width: 767px) {
+  .marquee-track {
+    width: 200%; /* still duplicated */
+  }
+  .marquee-track > li {
+    flex: 0 0 100%; /* 1 image visible at a time */
+  }
+}
+
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+
+
+
+/* Fade in + slide from left animation */
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.line-design {
+  animation: fadeSlideIn 1s ease forwards;
+}
+
+
+/* LineDesign: fade + slide-in from left, responsive length */
+.line-design {
+  width: 6rem;               /* desktop default */
+  height: 4px;
+  background: #111827;       /* dark gray (Tailwind gray-900) */
+  border-radius: 9999px;
+  opacity: 0;
+  transform: translate3d(-24px, 0, 0);
+  transform-origin: left center;
+  will-change: transform, opacity;
+  animation: lineIn 700ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+/* Slightly longer on large screens */
+@media (min-width: 1024px) {
+  .line-design { width: 8rem; height: 5px; }
+}
+
+/* Slightly shorter on small screens */
+@media (max-width: 639px) {
+  .line-design {
+    width: 4.5rem;
+    height: 3px;
+    transform: translate3d(-16px, 0, 0);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .line-design {
+    animation: none;
+    opacity: 1;
+    transform: translate3d(0,0,0);
+  }
+}
+
+@keyframes lineIn {
+  0%   { opacity: 0; transform: translate3d(-24px, 0, 0) scaleX(0.96); }
+  60%  { opacity: 1; transform: translate3d(6px, 0, 0) scaleX(1.02); }
+  100% { opacity: 1; transform: translate3d(0px, 0, 0) scaleX(1); }
+}
