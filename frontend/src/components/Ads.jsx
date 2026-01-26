@@ -1,4 +1,4 @@
-import workshopImage from '../assets/images/Learn-1.webp';
+import workshopImage from '../assets/images/learn-1.webp';
 import { useNavigate } from 'react-router-dom';
 
 const Ads = () => {

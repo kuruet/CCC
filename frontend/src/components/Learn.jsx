@@ -1,5 +1,5 @@
-import learnImage from '../assets/images/Learn-1.webp';
-import audienceImage from '../assets/images/Learn-2.webp';
+import learnImage from '../assets/images/learn-1.webp';
+import audienceImage from '../assets/images/learn-2.webp';
 
 export default function Learn() {
   const learningOutcomes = [
