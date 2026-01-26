@@ -1,4 +1,4 @@
-import instructorImage from '../assets/images/Instructor.webp';
+import instructorImage from '../assets/images/instructor.webp';
 
 export default function Instructor() {
   const achievements = [
