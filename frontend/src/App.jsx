@@ -8,7 +8,10 @@ import About from "./pages/About";
 import Service from "./pages/Service";
 import Workshop from "./pages/Workshop";
 import Register from "./pages/Register";
-
+import PrivacyPolicy from "./pages/Privacy"
+import Condition from "./pages/Condition";
+import Refund from "./pages/Refund"
+import Disclaimer from "./pages/Disclaimer"
 
 
 const App = () => {
@@ -24,6 +27,13 @@ const App = () => {
       <Route path="/service" element={<Service />} />
       <Route path="/workshop" element={<Workshop/>} />
       <Route path="/workshop/register" element={<Register/>} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
+      <Route path="/terms-and-conditions" element={<Condition/>}/>
+      <Route path="/refund-policy" element={<Refund/>}/>
+        <Route path="/disclaimer" element={<Disclaimer/>}/>
+
+
+
     </Routes>
   ) 
 }
