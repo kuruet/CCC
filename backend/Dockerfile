@@ -2,14 +2,15 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files from the current context (which will be /backend)
-COPY package.json package-lock.json* ./
+# The "Root Directory" setting makes the context the /backend folder
+# So we copy directly from there
+COPY package*.json ./
 
 RUN npm install
 
-# Copy everything else from /backend into /app
 COPY . .
 
+# Use Railway's dynamic port
 ENV PORT=8080
 EXPOSE 8080
 
