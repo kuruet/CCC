@@ -2,6 +2,6 @@
   "name": "ccc-root",
   "private": true,
   "scripts": {
-    "start": "cd Backend && npm start"
+    "start": "node server.js"
   }
 }
