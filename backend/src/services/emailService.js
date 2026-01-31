@@ -1,37 +1,26 @@
-import emailTransporter from "../utils/emailTransport.js";
 import Registration from "../models/Registration.js";
 import Workshop from "../models/Workshop.js";
 import { registrationConfirmationTemplate } from "../templates/registrationConfirmationEmail.js";
-
 import { Resend } from "resend";
 
-if (!process.env.RESEND_API_KEY) {
-  console.error("❌ RESEND_API_KEY is missing");
+// 🔒 Lazy initialization (safe for ESM + prod)
+function getResendClient() {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("❌ RESEND_API_KEY is missing");
+  }
+  return new Resend(process.env.RESEND_API_KEY);
 }
-
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-export async function testEmail() {
-  await resend.emails.send({
-    from: "Creative Caricature Club <onboarding@resend.dev>",
-    to: "bpratik728@gmail.com",
-    subject: "Resend test email",
-    html: "<p>If you got this, Resend is working.</p>",
-  });
-}
-
 
 export const sendRegistrationConfirmation = async (registrationId) => {
   try {
-    // 1️⃣ Fetch registration FIRST
+    // 1️⃣ Fetch registration
     const registration = await Registration.findById(registrationId);
     if (!registration) {
       console.warn("⚠️ Registration not found for email:", registrationId);
       return;
     }
 
-    // 2️⃣ Defensive email check (NOW SAFE)
+    // 2️⃣ Defensive email check
     if (!registration.email) {
       console.warn(
         "⚠️ Registration has no email, skipping confirmation:",
@@ -40,7 +29,7 @@ export const sendRegistrationConfirmation = async (registrationId) => {
       return;
     }
 
-    // 3️⃣ Idempotency check
+    // 3️⃣ Idempotency guard
     if (registration.confirmationSent) {
       console.log("ℹ️ Confirmation email already sent:", registrationId);
       return;
@@ -60,15 +49,17 @@ export const sendRegistrationConfirmation = async (registrationId) => {
       whatsappGroupLink: process.env.WHATSAPP_GROUP_LINK,
     });
 
-    // 6️⃣ Send email
-    await emailTransporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    // 6️⃣ Send email via Resend
+    const resend = getResendClient();
+
+    await resend.emails.send({
+      from: "Creative Caricature Club <onboarding@resend.dev>", // ✅ safe for now
       to: registration.email,
       subject: "🎉 Workshop Registration Confirmed",
       html,
     });
 
-    // 7️⃣ Update confirmation flags
+    // 7️⃣ Mark confirmation sent (ONLY after success)
     registration.confirmationSent = true;
     registration.confirmationSentAt = new Date();
     await registration.save();
