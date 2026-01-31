@@ -3,6 +3,25 @@ import Registration from "../models/Registration.js";
 import Workshop from "../models/Workshop.js";
 import { registrationConfirmationTemplate } from "../templates/registrationConfirmationEmail.js";
 
+import { Resend } from "resend";
+
+if (!process.env.RESEND_API_KEY) {
+  console.error("❌ RESEND_API_KEY is missing");
+}
+
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function testEmail() {
+  await resend.emails.send({
+    from: "Creative Caricature Club <onboarding@resend.dev>",
+    to: "bpratik728@gmail.com",
+    subject: "Resend test email",
+    html: "<p>If you got this, Resend is working.</p>",
+  });
+}
+
+
 export const sendRegistrationConfirmation = async (registrationId) => {
   try {
     // 1️⃣ Fetch registration FIRST
