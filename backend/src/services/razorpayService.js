@@ -1,18 +1,19 @@
-const razorpay = require('../config/razorpay');
+import razorpay from "../config/razorpay.js";
 
-const createOrder = async (amount, currency = 'INR') => {
+export const createOrder = async (amountInPaise, currency = "INR") => {
   try {
     const options = {
-      amount: amount * 100, // amount in paise
+      amount: Number(amountInPaise), // 🔒 force number
       currency,
-      payment_capture: 1, // auto-capture
+      receipt: `rcpt_${Date.now()}`,
+      payment_capture: 1,
     };
 
-    const order = await razorpay.orders.create(options);
-    return order; // contains order_id, amount, currency
+    console.log("📤 Creating Razorpay order with:", options);
+
+    return await razorpay.orders.create(options);
   } catch (error) {
-    throw new Error('Razorpay order creation failed');
+    console.error("🔥 Razorpay API ERROR:", error?.error || error);
+    throw error;
   }
 };
-
-module.exports = { createOrder };

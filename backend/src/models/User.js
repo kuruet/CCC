@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Phone number is required'],
     trim: true,
-    unique: true,
+    
   },
   paymentStatus: {
     type: String,
@@ -26,4 +26,4 @@ const userSchema = new mongoose.Schema({
   },
 }, { timestamps: true }); // automatically adds createdAt and updatedAt
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);

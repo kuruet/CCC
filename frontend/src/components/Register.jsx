@@ -9,32 +9,60 @@ export default function Register() {
 
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState(false);
 
-  const validateForm = () => {
-    const newErrors = {};
+  // const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModal, setSuccessModal] = useState({
+  open: false,
+  type: "success", // "success" | "error"
+  message: "",
+});
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
 
-    const mobileRegex = /^\d{10,15}$/;
-    if (!formData.mobile.trim()) {
-      newErrors.mobile = 'Mobile number is required';
-    } else if (!mobileRegex.test(formData.mobile)) {
-      newErrors.mobile = 'Mobile number must be 10-15 digits';
-    }
+const closeModal = () => {
+  setSuccessModal({ open: false, message: "" });
+};
+const handleKeyDown = (e) => {
+  if (e.key === "Escape") {
+    closeModal();
+  }
+};
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [name, setName] = useState("");
+const [email, setEmail] = useState("");
+const [phone, setPhone] = useState("");
+
+
+ // ----------------- Form Validation -----------------
+const validateForm = () => {
+  if (!formData.fullName.trim()) {
+    return "Full name is required";
+  }
+
+  if (!formData.email.trim()) {
+    return "Email is required";
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    return "Please enter a valid email";
+  }
+
+  if (!formData.mobile.trim()) {
+    return "Mobile number is required";
+  }
+
+  if (!/^\d{10,15}$/.test(formData.mobile)) {
+    return "Mobile number must be 10–15 digits";
+  }
+
+  return null; // ✅ valid
+};
+
+
 
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -43,32 +71,180 @@ export default function Register() {
     }
   };
 
-  const handlePayment = async () => {
-    if (!validateForm()) return;
+const handlePayment = async () => {
+  console.log("🚀 handlePayment started");
 
-    setIsProcessing(true);
+   
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      setShowSuccessModal(true);
-      setFormData({ fullName: '', email: '', mobile: '' });
-    }, 1500);
-  };
 
-  const closeModal = () => {
-    setShowSuccessModal(false);
-  };
+  // ✅ Run frontend validation first
+  const validationError = validateForm();
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      closeModal();
+  if (validationError) {
+    setFormError(validationError); // show in UI
+    return; // ⛔ STOP here
+  }
+
+  setFormError(null); // clear old errors
+
+
+  try {
+    // 1️⃣ Create order on backend
+    console.log("📤 Step 1: Creating order on backend");
+    const response = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
+
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.mobile,
+      }),
+    });
+
+    console.log("📥 Step 1 Response status:", response.status);
+    const data = await response.json();
+    console.log("📥 Step 1 Response data:", data);
+
+     
+
+    if (!data.success) {
+      console.error("❌ Step 1: Order creation failed", data.message);
+
+      // Show exact backend error in the UI modal
+      setSuccessModal({
+        open: true,
+         type: "error",
+        message: `Error: ${data.message || "Unable to create order. Please try again."}`,
+      });
+      return;
     }
-  };
+
+    // ✅ Extract userId from response
+    const userId = data.user._id;
+    console.log("✅ Step 1: UserId obtained:", userId);
+
+    // 2️⃣ Prepare Razorpay options
+    console.log("📦 Step 2: Preparing Razorpay checkout options");
+    const options = {
+      key: data.key_id,
+      amount: data.amount, // 🔥 MUST MATCH BACKEND ORDER
+      currency: data.currency,
+      name: "Creative Caricature Club",
+      description: "Online Caricature Workshop",
+      order_id: data.order_id,
+      prefill: {
+        name: data.user.name,
+        email: data.user.email,
+        contact: data.user.phone,
+      },
+      theme: { color: "#8A733E" },
+
+      // 3️⃣ Handler called when payment completes
+      handler: async function (response) {
+        console.log("🟢 Step 3: Razorpay handler triggered");
+        console.log("🧾 Razorpay response:", response);
+
+        try {
+          setIsProcessing(true);
+          console.log("⏳ Step 3: Processing payment verification...");
+
+          // 4️⃣ Call verify API
+          console.log("📤 Step 4: Sending payment verification request to backend");
+          const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              userId, // ✅ pass the real userId from create-order
+              workshopId: "6975fb4c0ae1a8e3014f4e87", // your workshop
+            }),
+          });
+
+          console.log("📥 Step 4 Response status:", verifyRes.status);
+          const verifyData = await verifyRes.json();
+          console.log("📥 Step 4 Response data:", verifyData);
+
+          setIsProcessing(false);
+
+          if (verifyData.success) {
+            console.log("✅ Step 4: Payment verified & registration successful");
+            setSuccessModal({
+              open: true,
+              type: "success",
+              message: `Payment Successful! You are registered for ${verifyData.workshopTitle}`,
+            });
+          } else {
+            console.error("❌ Step 4: Payment verification failed", verifyData.message);
+
+            // Show exact verification failure message in UI
+            setSuccessModal({
+              open: true,
+              message: `Payment verification failed: ${verifyData.message}`,
+            });
+          }
+        } catch (err) {
+          console.error("🔥 Step 4: Payment verification error", err);
+          setIsProcessing(false);
+
+          setSuccessModal({
+            open: true,
+            message: "Server error during payment verification. Please try again.",
+          });
+        }
+      },
+
+      modal: {
+        ondismiss: function () {
+          console.log("⚠️ Razorpay checkout closed by user");
+        },
+      },
+    };
+
+    // 5️⃣ Open Razorpay checkout
+    console.log("🧾 Step 5: Opening Razorpay checkout");
+   console.log("🔥 FINAL RAZORPAY CONFIG (PAISE)", options);
+
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+
+  } catch (error) {
+    console.error("🔥 Step 1-5: Order creation error", error);
+
+    if (!data.success) {
+  setFormError(data.message || "Unable to create order");
+  return;
+}
+
+console.log("Razorpay Order Debug:", {
+  order_id: data.order_id,
+  amount: data.amount,
+  key: data.key_id,
+});
+
+
+    // Show frontend-friendly error in modal
+    setSuccessModal({
+      open: false,
+      message: "Unable to create order. Please check your details and try again.",
+    });
+  }
+};
+
+
+
+
 
   return (
     <div className="min-h-screen w-full bg-[#FFF5DF]">
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
-        
+         
         {/* Left Side - Workshop Information */}
         <div className="flex items-center justify-center px-6 sm:px-10 md:px-12 lg:px-16 py-12 sm:py-16 lg:py-20">
           <div className="max-w-xl space-y-6 sm:space-y-8">
@@ -179,17 +355,19 @@ export default function Register() {
                     Full Name
                   </label>
                   <input
-                    id="fullName"
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => handleChange('fullName', e.target.value)}
-                    className={`w-full px-4 py-3 sm:py-3.5 rounded-lg border-2 bg-[#FFF5DF] text-[#8A733E] placeholder-[#8A733E]/40 transition-all duration-300 ${
-                      errors.fullName
-                        ? 'border-[#8A733E]/60 focus:border-[#8A733E]'
-                        : 'border-[#8A733E]/20 focus:border-[#8A733E]/60'
-                    } focus:outline-none focus:ring-2 focus:ring-[#8A733E]/20`}
-                    placeholder="Enter your full name"
-                  />
+  id="name"
+  type="text"
+ value={formData.fullName}
+  onChange={(e) => handleChange('fullName', e.target.value)}
+  className={`w-full px-4 py-3 sm:py-3.5 rounded-lg border-2 bg-[#FFF5DF] text-[#8A733E] placeholder-[#8A733E]/40 transition-all duration-300 ${
+    errors.name
+      ? 'border-[#8A733E]/60 focus:border-[#8A733E]'
+      : 'border-[#8A733E]/20 focus:border-[#8A733E]/60'
+  } focus:outline-none focus:ring-2 focus:ring-[#8A733E]/20`}
+  placeholder="Enter your full name"
+  required
+/>
+
                   {errors.fullName && (
                     <p className="text-sm text-[#8A733E]/70 mt-1">{errors.fullName}</p>
                   )}
@@ -200,17 +378,19 @@ export default function Register() {
                     Email Address
                   </label>
                   <input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    className={`w-full px-4 py-3 sm:py-3.5 rounded-lg border-2 bg-[#FFF5DF] text-[#8A733E] placeholder-[#8A733E]/40 transition-all duration-300 ${
-                      errors.email
-                        ? 'border-[#8A733E]/60 focus:border-[#8A733E]'
-                        : 'border-[#8A733E]/20 focus:border-[#8A733E]/60'
-                    } focus:outline-none focus:ring-2 focus:ring-[#8A733E]/20`}
-                    placeholder="your@email.com"
-                  />
+  id="email"
+  type="email"
+ value={formData.email}
+  onChange={(e) => handleChange('email', e.target.value)}
+  className={`w-full px-4 py-3 sm:py-3.5 rounded-lg border-2 bg-[#FFF5DF] text-[#8A733E] placeholder-[#8A733E]/40 transition-all duration-300 ${
+    errors.email
+      ? 'border-[#8A733E]/60 focus:border-[#8A733E]'
+      : 'border-[#8A733E]/20 focus:border-[#8A733E]/60'
+  } focus:outline-none focus:ring-2 focus:ring-[#8A733E]/20`}
+  placeholder="your@email.com"
+  required
+/>
+
                   {errors.email && (
                     <p className="text-sm text-[#8A733E]/70 mt-1">{errors.email}</p>
                   )}
@@ -220,22 +400,28 @@ export default function Register() {
                   <label htmlFor="mobile" className="block text-sm sm:text-base font-semibold text-[#8A733E]">
                     Mobile Number
                   </label>
-                  <input
-                    id="mobile"
-                    type="tel"
-                    value={formData.mobile}
-                    onChange={(e) => handleChange('mobile', e.target.value)}
-                    className={`w-full px-4 py-3 sm:py-3.5 rounded-lg border-2 bg-[#FFF5DF] text-[#8A733E] placeholder-[#8A733E]/40 transition-all duration-300 ${
-                      errors.mobile
-                        ? 'border-[#8A733E]/60 focus:border-[#8A733E]'
-                        : 'border-[#8A733E]/20 focus:border-[#8A733E]/60'
-                    } focus:outline-none focus:ring-2 focus:ring-[#8A733E]/20`}
-                    placeholder="10 digits"
-                  />
+                <input
+  id="phone"
+  type="tel"
+   value={formData.mobile}
+  onChange={(e) => handleChange('mobile', e.target.value)}
+  className={`w-full px-4 py-3 sm:py-3.5 rounded-lg border-2 bg-[#FFF5DF] text-[#8A733E] placeholder-[#8A733E]/40 transition-all duration-300 ${
+    errors.phone
+      ? 'border-[#8A733E]/60 focus:border-[#8A733E]'
+      : 'border-[#8A733E]/20 focus:border-[#8A733E]/60'
+  } focus:outline-none focus:ring-2 focus:ring-[#8A733E]/20`}
+  placeholder="10 digits"
+  required
+/>
+
                   {errors.mobile && (
                     <p className="text-sm text-[#8A733E]/70 mt-1">{errors.mobile}</p>
                   )}
                 </div>
+                {formError && (
+  <p className="text-red-600 text-sm mt-2">{formError}</p>
+)}
+
 
                 <button
                   onClick={handlePayment}
@@ -258,7 +444,7 @@ export default function Register() {
         </div>
       </div>
 
-      {showSuccessModal && (
+      {/* {successModal && (
         <div
           className="fixed inset-0 bg-[#8A733E]/60 flex items-center justify-center z-50 p-4"
           onClick={closeModal}
@@ -294,7 +480,64 @@ export default function Register() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
+
+     {successModal.open && (
+  <div
+    className="fixed inset-0 bg-[#8A733E]/60 flex items-center justify-center z-50 p-4"
+    onClick={closeModal}       // click outside closes
+    onKeyDown={handleKeyDown}  // Esc key closes
+    tabIndex={0}               // needed to make div focusable for onKeyDown
+  >
+    <div
+      className="relative w-full max-w-md bg-[#FFF5DF] rounded-2xl shadow-2xl p-8 sm:p-10 transform animate-fadeIn"
+      onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+    >
+      <button
+        onClick={closeModal}
+        className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-[#8A733E] hover:bg-[#8A733E]/10 focus:outline-none focus:ring-2 focus:ring-[#8A733E]/30 transition-all duration-200"
+        aria-label="Close modal"
+      >
+        <span className="text-2xl leading-none">×</span>
+      </button>
+
+      <div className="text-center space-y-4 sm:space-y-5">
+        <div className="text-center space-y-4 sm:space-y-5">
+
+  {successModal.type === "success" ? (
+    <>
+      <div className="text-5xl sm:text-6xl">🎉</div>
+      <h2 className="text-2xl sm:text-3xl font-bold text-[#8A733E]">
+        Payment Successful!
+      </h2>
+    </>
+  ) : (
+    <>
+      <div className="text-5xl sm:text-6xl">⚠️</div>
+      <h2 className="text-2xl sm:text-3xl font-bold text-red-600">
+        Registration Failed
+      </h2>
+    </>
+  )}
+
+  <p className="text-base sm:text-lg text-[#8A733E]/80 leading-relaxed">
+    {successModal.message}
+  </p>
+
+  <button
+    onClick={closeModal}
+    className="mt-6 px-8 py-3 text-base font-semibold text-[#FFF5DF] bg-[#8A733E] rounded-lg"
+  >
+    Close
+  </button>
+</div>
+
+         
+      </div>
+    </div>
+  </div>
+)}
+
 
       <style>{`
         @keyframes fadeIn {
