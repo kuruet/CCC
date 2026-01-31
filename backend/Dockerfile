@@ -1,17 +1,17 @@
-FROM node:20-slim
+# FROM node:20-slim
 
-WORKDIR /app
+# WORKDIR /app
 
-# The "Root Directory" setting makes the context the /backend folder
-# So we copy directly from there
-COPY package*.json ./
+# # The "Root Directory" setting makes the context the /backend folder
+# # So we copy directly from there
+# COPY package*.json ./
 
-RUN npm install
+# RUN npm install
 
-COPY . .
+# COPY . .
 
-# Use Railway's dynamic port
-ENV PORT=8080
-EXPOSE 8080
+# # Use Railway's dynamic port
+# ENV PORT=8080
+# EXPOSE 8080
 
-CMD ["npm", "start"]
+# CMD ["npm", "start"]
