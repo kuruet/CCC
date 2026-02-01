@@ -61,19 +61,23 @@ export const razorpayWebhookHandler = async (req, res) => {
     payment.razorpay_payment_id = paymentEntity.id;
     await payment.save();
 
-    const registration = await Registration.findOneAndUpdate(
-      {
-        userId: payment.userId,
-        workshopId: payment.workshopId,
-      },
-      {
-        paymentId: payment._id,
-        status: "CONFIRMED",
-        email: user.email,
-        name: user.name,
-      },
-      { upsert: true, new: true }
-    );
+   const registration = await Registration.findOneAndUpdate(
+  {
+    userId: payment.userId,
+    workshopId: payment.workshopId,
+  },
+  {
+    paymentId: payment._id,
+    status: "CONFIRMED",
+
+    // 🔒 SNAPSHOT DATA
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+  },
+  { upsert: true, new: true }
+);
+
 
     await sendRegistrationConfirmation(registration._id);
 
