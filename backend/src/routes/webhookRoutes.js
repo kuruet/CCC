@@ -1,12 +1,13 @@
 import express from "express";
-import { razorpayWebhook } from "../controllers/webhookController.js";
+import bodyParser from "body-parser";
+import { razorpayWebhookHandler } from "../controllers/razorpayWebhookController.js";
 
 const router = express.Router();
 
 router.post(
   "/razorpay",
-  express.json({ verify: (req, res, buf) => (req.rawBody = buf) }),
-  razorpayWebhook
+  bodyParser.raw({ type: "application/json" }),
+  razorpayWebhookHandler
 );
 
 export default router;

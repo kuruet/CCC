@@ -4,17 +4,27 @@ import bodyParser from "body-parser";
 
 import paymentRoutes from "./routes/paymentRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
+
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
 
-// Routes
-app.use("/api/payment", paymentRoutes);
-
+/**
+ * ✅ Razorpay Webhook
+ * MUST come BEFORE bodyParser.json()
+ * Uses raw body for signature verification
+ */
 app.use("/api/webhooks", webhookRoutes);
 
-// Default route
+/**
+ * ✅ Normal JSON parsing for rest of app
+ */
+app.use(bodyParser.json());
+
+// Payment routes
+app.use("/api/payment", paymentRoutes);
+
+// Health check
 app.get("/", (req, res) => {
   res.send("Backend is running!");
 });
