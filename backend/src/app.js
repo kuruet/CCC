@@ -3,7 +3,6 @@ import cors from "cors";
 import bodyParser from "body-parser";
 
 import paymentRoutes from "./routes/paymentRoutes.js";
-import "./utils/emailTransport.js";
 
 const app = express();
 
