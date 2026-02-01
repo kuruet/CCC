@@ -2,7 +2,7 @@
 import crypto from "crypto";
 import Payment from "../models/Payment.js";
 import Registration from "../models/Registration.js";
-import Workshop from "../models/Workshop.js";
+import User from "../models/User.js";
 import { sendRegistrationConfirmation } from "../services/emailService.js";
 
 export const razorpayWebhookHandler = async (req, res) => {
@@ -30,46 +30,54 @@ export const razorpayWebhookHandler = async (req, res) => {
 
     console.log("📡 Razorpay webhook received:", event.event);
 
-    // ✅ Only trust captured payments
-    if (event.event === "payment.captured") {
-      const paymentEntity = event.payload.payment.entity;
-
-      const payment = await Payment.findOne({
-        razorpay_order_id: paymentEntity.order_id,
-      });
-
-      if (!payment) {
-        console.warn("⚠️ Payment not found for webhook");
-        return res.json({ status: "ignored" });
-      }
-
-      if (payment.status === "SUCCESS") {
-        console.log("ℹ️ Payment already processed");
-        return res.json({ status: "already_processed" });
-      }
-
-      payment.status = "SUCCESS";
-      payment.razorpay_payment_id = paymentEntity.id;
-      await payment.save();
-
-      const workshop = await Workshop.findById(payment.workshopId);
-
-      const registration = await Registration.findOneAndUpdate(
-        {
-          userId: payment.userId,
-          workshopId: payment.workshopId,
-        },
-        {
-          paymentId: payment._id,
-          status: "CONFIRMED",
-        },
-        { upsert: true, new: true }
-      );
-
-      await sendRegistrationConfirmation(registration._id);
-
-      console.log("✅ Payment confirmed via webhook & email sent");
+    if (event.event !== "payment.captured") {
+      return res.json({ status: "ignored_event" });
     }
+
+    const paymentEntity = event.payload.payment.entity;
+
+    const payment = await Payment.findOne({
+      razorpay_order_id: paymentEntity.order_id,
+    });
+
+    if (!payment) {
+      console.warn("⚠️ Payment not found for webhook");
+      return res.json({ status: "ignored" });
+    }
+
+    if (payment.status === "SUCCESS") {
+      console.log("ℹ️ Payment already processed");
+      return res.json({ status: "already_processed" });
+    }
+
+    const user = await User.findById(payment.userId);
+
+    if (!user) {
+      console.warn("⚠️ User not found for webhook payment");
+      return res.json({ status: "user_missing" });
+    }
+
+    payment.status = "SUCCESS";
+    payment.razorpay_payment_id = paymentEntity.id;
+    await payment.save();
+
+    const registration = await Registration.findOneAndUpdate(
+      {
+        userId: payment.userId,
+        workshopId: payment.workshopId,
+      },
+      {
+        paymentId: payment._id,
+        status: "CONFIRMED",
+        email: user.email,
+        name: user.name,
+      },
+      { upsert: true, new: true }
+    );
+
+    await sendRegistrationConfirmation(registration._id);
+
+    console.log("✅ Payment confirmed via webhook & email sent");
 
     res.json({ status: "ok" });
   } catch (error) {
