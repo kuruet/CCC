@@ -164,7 +164,7 @@ const handlePayment = async () => {
       setSuccessModal({
         open: true,
         type: "success",
-        message: `Payment Successful! You are registered for ${verifyData.workshopTitle}`,
+        message: `Payment Successful! You are registered for ${verifyData.workshop.title}`,
       });
     } else {
       setSuccessModal({
