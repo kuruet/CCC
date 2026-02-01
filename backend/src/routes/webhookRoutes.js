@@ -1,6 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
-import { razorpayWebhookHandler } from "../controllers/razorpayWebhookController.js";
+import { razorpayWebhookHandler } from "../controllers/webhookController.js";
 
 const router = express.Router();
 
