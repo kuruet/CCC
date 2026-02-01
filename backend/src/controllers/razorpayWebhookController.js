@@ -1,0 +1,79 @@
+// src/controllers/razorpayWebhookController.js
+import crypto from "crypto";
+import Payment from "../models/Payment.js";
+import Registration from "../models/Registration.js";
+import Workshop from "../models/Workshop.js";
+import { sendRegistrationConfirmation } from "../services/emailService.js";
+
+export const razorpayWebhookHandler = async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error("❌ RAZORPAY_WEBHOOK_SECRET missing");
+      return res.status(500).send("Webhook secret not configured");
+    }
+
+    const razorpaySignature = req.headers["x-razorpay-signature"];
+
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(req.body)
+      .digest("hex");
+
+    if (expectedSignature !== razorpaySignature) {
+      console.error("❌ Invalid Razorpay webhook signature");
+      return res.status(400).send("Invalid signature");
+    }
+
+    const event = JSON.parse(req.body.toString());
+
+    console.log("📡 Razorpay webhook received:", event.event);
+
+    // ✅ Only trust captured payments
+    if (event.event === "payment.captured") {
+      const paymentEntity = event.payload.payment.entity;
+
+      const payment = await Payment.findOne({
+        razorpay_order_id: paymentEntity.order_id,
+      });
+
+      if (!payment) {
+        console.warn("⚠️ Payment not found for webhook");
+        return res.json({ status: "ignored" });
+      }
+
+      if (payment.status === "SUCCESS") {
+        console.log("ℹ️ Payment already processed");
+        return res.json({ status: "already_processed" });
+      }
+
+      payment.status = "SUCCESS";
+      payment.razorpay_payment_id = paymentEntity.id;
+      await payment.save();
+
+      const workshop = await Workshop.findById(payment.workshopId);
+
+      const registration = await Registration.findOneAndUpdate(
+        {
+          userId: payment.userId,
+          workshopId: payment.workshopId,
+        },
+        {
+          paymentId: payment._id,
+          status: "CONFIRMED",
+        },
+        { upsert: true, new: true }
+      );
+
+      await sendRegistrationConfirmation(registration._id);
+
+      console.log("✅ Payment confirmed via webhook & email sent");
+    }
+
+    res.json({ status: "ok" });
+  } catch (error) {
+    console.error("🔥 Webhook processing error:", error);
+    res.status(500).send("Webhook error");
+  }
+};
