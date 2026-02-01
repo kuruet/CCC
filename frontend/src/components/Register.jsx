@@ -9,8 +9,10 @@ export default function Register() {
 
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+
 
   // const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successModal, setSuccessModal] = useState({
@@ -31,9 +33,7 @@ const handleKeyDown = (e) => {
   }
 };
 
-  const [name, setName] = useState("");
-const [email, setEmail] = useState("");
-const [phone, setPhone] = useState("");
+
 
 
  // ----------------- Form Validation -----------------
@@ -74,63 +74,56 @@ const validateForm = () => {
 const handlePayment = async () => {
   console.log("🚀 handlePayment started");
 
-   
+  // 🔒 Prevent double click
+  if (isPaying) return;
 
-
-  // ✅ Run frontend validation first
+  // ✅ Frontend validation
   const validationError = validateForm();
-
   if (validationError) {
-    setFormError(validationError); // show in UI
-    return; // ⛔ STOP here
+    setFormError(validationError);
+    return;
   }
 
-  setFormError(null); // clear old errors
-
+  setFormError(null);
+  setIsPaying(true); // 🚀 start loader immediately
 
   try {
-    // 1️⃣ Create order on backend
+    // 1️⃣ Create order
     console.log("📤 Step 1: Creating order on backend");
-    const response = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
-
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: formData.fullName,
-        email: formData.email,
-        phone: formData.mobile,
-      }),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/payment/create-order`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          phone: formData.mobile,
+        }),
+      }
+    );
 
     console.log("📥 Step 1 Response status:", response.status);
     const data = await response.json();
     console.log("📥 Step 1 Response data:", data);
 
-     
-
     if (!data.success) {
-      console.error("❌ Step 1: Order creation failed", data.message);
-
-      // Show exact backend error in the UI modal
+      setIsPaying(false);
       setSuccessModal({
         open: true,
-         type: "error",
-        message: `Error: ${data.message || "Unable to create order. Please try again."}`,
+        type: "error",
+        message: data.message || "Unable to create order",
       });
       return;
     }
 
-    // ✅ Extract userId from response
     const userId = data.user._id;
-    console.log("✅ Step 1: UserId obtained:", userId);
+    console.log("✅ UserId obtained:", userId);
 
-    // 2️⃣ Prepare Razorpay options
-    console.log("📦 Step 2: Preparing Razorpay checkout options");
+    // 2️⃣ Razorpay options
     const options = {
       key: data.key_id,
-      amount: data.amount, // 🔥 MUST MATCH BACKEND ORDER
+      amount: data.amount,
       currency: data.currency,
       name: "Creative Caricature Club",
       description: "Online Caricature Workshop",
@@ -142,100 +135,79 @@ const handlePayment = async () => {
       },
       theme: { color: "#8A733E" },
 
-      // 3️⃣ Handler called when payment completes
-      handler: async function (response) {
-        console.log("🟢 Step 3: Razorpay handler triggered");
-        console.log("🧾 Razorpay response:", response);
+      // 3️⃣ Payment success handler
+ handler: async function (response) {
+  console.log("🟢 Razorpay handler triggered");
 
-        try {
-          setIsProcessing(true);
-          console.log("⏳ Step 3: Processing payment verification...");
+  try {
+    setIsProcessing(true);
 
-          // 4️⃣ Call verify API
-          console.log("📤 Step 4: Sending payment verification request to backend");
-          const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+    const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        userId,
+        workshopId: "6975fb4c0ae1a8e3014f4e87",
+      }),
+    });
 
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              userId, // ✅ pass the real userId from create-order
-              workshopId: "6975fb4c0ae1a8e3014f4e87", // your workshop
-            }),
-          });
+    const verifyData = await verifyRes.json();
 
-          console.log("📥 Step 4 Response status:", verifyRes.status);
-          const verifyData = await verifyRes.json();
-          console.log("📥 Step 4 Response data:", verifyData);
+    // 🔑 RESET STATES ONCE
+    setIsProcessing(false);
+    setIsPaying(false);
 
-          setIsProcessing(false);
+    if (verifyData.success) {
+      setSuccessModal({
+        open: true,
+        type: "success",
+        message: `Payment Successful! You are registered for ${verifyData.workshopTitle}`,
+      });
+    } else {
+      setSuccessModal({
+        open: true,
+        type: "error",
+        message: verifyData.message,
+      });
+    }
+  } catch (err) {
+    console.error("🔥 Verification error", err);
+    setIsProcessing(false);
+    setIsPaying(false);
+    setSuccessModal({
+      open: true,
+      type: "error",
+      message: "Server error during payment verification.",
+    });
+  }
+},
 
-          if (verifyData.success) {
-            console.log("✅ Step 4: Payment verified & registration successful");
-            setSuccessModal({
-              open: true,
-              type: "success",
-              message: `Payment Successful! You are registered for ${verifyData.workshopTitle}`,
-            });
-          } else {
-            console.error("❌ Step 4: Payment verification failed", verifyData.message);
 
-            // Show exact verification failure message in UI
-            setSuccessModal({
-              open: true,
-              message: `Payment verification failed: ${verifyData.message}`,
-            });
-          }
-        } catch (err) {
-          console.error("🔥 Step 4: Payment verification error", err);
-          setIsProcessing(false);
-
-          setSuccessModal({
-            open: true,
-            message: "Server error during payment verification. Please try again.",
-          });
-        }
-      },
-
+      // 4️⃣ User closes Razorpay
       modal: {
         ondismiss: function () {
-          console.log("⚠️ Razorpay checkout closed by user");
+          console.log("⚠️ Razorpay closed by user");
+          setIsPaying(false);
         },
       },
     };
 
-    // 5️⃣ Open Razorpay checkout
-    console.log("🧾 Step 5: Opening Razorpay checkout");
-   console.log("🔥 FINAL RAZORPAY CONFIG (PAISE)", options);
-
-
-    const razorpay = new window.Razorpay(options);
-    razorpay.open();
-
+    console.log("🧾 Opening Razorpay checkout");
+    new window.Razorpay(options).open();
   } catch (error) {
-    console.error("🔥 Step 1-5: Order creation error", error);
-
-    if (!data.success) {
-  setFormError(data.message || "Unable to create order");
-  return;
-}
-
-console.log("Razorpay Order Debug:", {
-  order_id: data.order_id,
-  amount: data.amount,
-  key: data.key_id,
-});
-
-
-    // Show frontend-friendly error in modal
+    console.error("🔥 Order creation error", error);
+    setIsPaying(false);
     setSuccessModal({
-      open: false,
-      message: "Unable to create order. Please check your details and try again.",
+      open: true,
+      type: "error",
+      message: "Something went wrong. Please try again.",
     });
   }
 };
+
 
 
 
@@ -423,13 +395,22 @@ console.log("Razorpay Order Debug:", {
 )}
 
 
-                <button
-                  onClick={handlePayment}
-                  disabled={isProcessing}
-                  className="w-full py-4 sm:py-4.5 px-6 text-base sm:text-lg font-bold text-[#FFF5DF] bg-[#8A733E] rounded-lg hover:bg-[#8A733E]/90 focus:outline-none focus:ring-4 focus:ring-[#8A733E]/30 transform hover:scale-105 active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isProcessing ? 'Processing...' : 'Pay ₹1999'}
-                </button>
+              <button
+  onClick={handlePayment}
+  disabled={isPaying}
+  className="w-full py-4 px-6 font-bold text-[#FFF5DF] bg-[#8A733E] rounded-lg flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+>
+  {isPaying ? (
+    <>
+      <span className="w-5 h-5 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
+      <span>Processing...</span>
+    </>
+  ) : (
+    "Pay ₹1999"
+  )}
+</button>
+
+
 
                 <p className="text-xs sm:text-sm text-center text-[#8A733E]/60 pt-2">
                   Secure payment • Instant confirmation
