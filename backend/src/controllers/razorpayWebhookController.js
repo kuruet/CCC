@@ -28,7 +28,8 @@ export const razorpayWebhookHandler = async (req, res) => {
 
     const event = JSON.parse(req.body.toString());
 
-    console.log("📡 Razorpay webhook received:", event.event);
+   console.log("📡 Razorpay webhook:", event.event);
+
 
     if (event.event !== "payment.captured") {
       return res.json({ status: "ignored_event" });
@@ -67,19 +68,27 @@ export const razorpayWebhookHandler = async (req, res) => {
     workshopId: payment.workshopId,
   },
   {
-    paymentId: payment._id,
-    status: "CONFIRMED",
+    $set: {
+      paymentId: payment._id,
+      status: "CONFIRMED",
 
-    // 🔒 SNAPSHOT DATA
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
+      // 🔒 SNAPSHOT (immutable)
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    },
   },
   { upsert: true, new: true }
 );
 
 
-    await sendRegistrationConfirmation(registration._id);
+
+    Promise.resolve()
+  .then(() => sendRegistrationConfirmation(registration._id))
+  .catch((err) =>
+    console.error("❌ Webhook email failed:", err.message)
+  );
+
 
     console.log("✅ Payment confirmed via webhook & email sent");
 
