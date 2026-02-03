@@ -164,13 +164,13 @@ const handlePayment = async () => {
       setSuccessModal({
         open: true,
         type: "success",
-        message: `Payment Successful! You are registered for ${verifyData.workshop.title}`,
+        message: "Payment received successfully. Your registration will be confirmed shortly. Please check your email.",
       });
     } else {
       setSuccessModal({
         open: true,
         type: "error",
-        message: verifyData.message,
+        message: verifyData.message || "Payment verification failed.",
       });
     }
   } catch (err) {

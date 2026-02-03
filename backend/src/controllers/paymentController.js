@@ -86,12 +86,12 @@ export const verifyPayment = async (req, res) => {
 
   try {
     const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      userId,
-      workshopId,
-    } = req.body;
+  razorpay_order_id,
+  razorpay_payment_id,
+  razorpay_signature,
+  workshopId,
+} = req.body;
+
 
     console.log('Step 1: Validating request body');
 
@@ -117,7 +117,18 @@ export const verifyPayment = async (req, res) => {
     console.log('✅ Workshop found:', workshop.title);
 
     console.log('Step 3: Checking existing payment');
-    let payment = await Payment.findOne({ razorpay_order_id });
+   let payment = await Payment.findOne({ razorpay_order_id });
+
+   if (!payment) {
+  return res.status(404).json({
+    success: false,
+    message: "Payment order not found",
+  });
+}
+
+const userId = payment.userId;
+
+
 
     if (payment && payment.status === 'SUCCESS') {
       console.log('⚠️ Payment already verified');
@@ -187,21 +198,30 @@ if (!user) {
       registration = await Registration.findOneAndUpdate(
   { userId, workshopId },
   {
-    paymentId: payment._id,
-    status: "CONFIRMED",
+    $set: {
+      paymentId: payment._id,
+      status: "CONFIRMED",
 
-    // 🔒 SNAPSHOT DATA FOR EMAIL & AUDIT
-    email: user.email,
-    name: user.name,
+      // 🔒 SNAPSHOT (never rely on User later)
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+    },
   },
   { upsert: true, new: true }
 );
 
 
 
+
       console.log('✅ Registration updated:', registration._id);
 
-        sendRegistrationConfirmation(registration._id);
+        Promise.resolve()
+  .then(() => sendRegistrationConfirmation(registration._id))
+  .catch((err) =>
+    console.error("❌ Email dispatch failed:", err.message)
+  );
+
     }
 
     console.log('================ VERIFY PAYMENT END ================\n');
