@@ -95,13 +95,14 @@ export const verifyPayment = async (req, res) => {
 
     console.log('Step 1: Validating request body');
 
-    if (!razorpay_order_id || !userId || !workshopId) {
-      console.log('❌ Validation failed');
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required payment details',
-      });
-    }
+   if (!razorpay_order_id || !workshopId) {
+  console.log('❌ Validation failed');
+  return res.status(400).json({
+    success: false,
+    message: 'Missing required payment details',
+  });
+}
+
 
     console.log('✅ Validation passed');
 
@@ -172,23 +173,19 @@ const userId = payment.userId;
       payment.razorpay_signature = razorpay_signature || payment.razorpay_signature;
       payment.status = newStatus;
       payment = await payment.save();
-    } else {
-      payment = await Payment.create({
-        razorpay_order_id,
-        razorpay_payment_id: razorpay_payment_id || null,
-        razorpay_signature: razorpay_signature || null,
-        amount: workshop.price,
-        currency: 'INR',
-        status: newStatus,
-        userId,
-        workshopId,
-      });
-    }
+    } 
+   // no-op: payment already exists from order creation
 
-    const user = await User.findById(userId);
+
+ const user = await User.findById(userId);
 if (!user) {
   console.warn("⚠️ User not found for registration snapshot:", userId);
+  return res.status(404).json({
+    success: false,
+    message: "User not found for payment",
+  });
 }
+
 
 
     let registration = null;

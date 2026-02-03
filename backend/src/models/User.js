@@ -13,14 +13,14 @@ const userSchema = new mongoose.Schema(
       required: [true, "Email is required"],
       trim: true,
       lowercase: true,
-      index: true,
+      
     },
 
     phone: {
       type: String,
       required: [true, "Phone number is required"],
       trim: true,
-      index: true,
+     
       set: (v) => v.replace(/\D/g, ""), // normalize phone
     },
   },
