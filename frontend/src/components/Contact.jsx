@@ -24,7 +24,7 @@ import { useState, useEffect, useRef } from 'react';
 const defaultContent = {
   heading: "Let's Connect",
   paragraph: "Feel free to leave us a message via the form, or you can get a hold of me at ",
-  email: "collabccc15@gmail.com",
+  email: "creativecaricatureclub@gmail.com",
   closingText: ""
 };
 

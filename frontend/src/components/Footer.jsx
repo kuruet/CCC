@@ -138,7 +138,7 @@ const Footer = () => {
                 <a href="/" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
                   Home
                 </a>
-                <a href="/work" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
+                <a href="/portfolio" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
                   Work
                 </a>
                 <a href="/workshop" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
@@ -149,7 +149,7 @@ const Footer = () => {
                 <a href="/about" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
                   About
                 </a>
-                <a href="/services" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
+                <a href="/service" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
                   Services
                 </a>
                 <a href="/contact" className="footer-link-underline morion-text text-lg hover:opacity-80 transition-opacity" style={{ color: '#FFF5DF' }}>
