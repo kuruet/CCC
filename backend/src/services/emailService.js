@@ -49,7 +49,7 @@ export const sendRegistrationConfirmation = async (registrationId) => {
     // 6️⃣ Send email
     const resend = getResendClient();
     await resend.emails.send({
-      from: "Creative Caricature Club <onboarding@resend.dev>",
+     from: "Creative Caricature Club <no-reply@creativecaricatureclub.com>",
       to: registration.email,
       subject: "🎉 Workshop Registration Confirmed",
       html,
