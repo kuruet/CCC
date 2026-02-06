@@ -12,6 +12,8 @@ import PrivacyPolicy from "./pages/Privacy"
 import Condition from "./pages/Condition";
 import Refund from "./pages/Refund"
 import Disclaimer from "./pages/Disclaimer"
+import Dashboard from "./pages/Dashboard"
+
 
 
 const App = () => {
@@ -31,6 +33,7 @@ const App = () => {
       <Route path="/terms-and-conditions" element={<Condition/>}/>
       <Route path="/refund-policy" element={<Refund/>}/>
         <Route path="/disclaimer" element={<Disclaimer/>}/>
+         <Route path="/dashboard" element={<Dashboard/>}/>
 
 
 

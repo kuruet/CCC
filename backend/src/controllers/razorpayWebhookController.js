@@ -27,9 +27,7 @@ export const razorpayWebhookHandler = async (req, res) => {
     }
 
     const event = JSON.parse(req.body.toString());
-
-   console.log("📡 Razorpay webhook:", event.event);
-
+    console.log("📡 Razorpay webhook:", event.event);
 
     if (event.event !== "payment.captured") {
       return res.json({ status: "ignored_event" });
@@ -52,49 +50,65 @@ export const razorpayWebhookHandler = async (req, res) => {
     }
 
     const user = await User.findById(payment.userId);
-
     if (!user) {
       console.warn("⚠️ User not found for webhook payment");
       return res.json({ status: "user_missing" });
     }
 
+    const slot = payment.slot;
+
+    // 🔒 FINAL SEAT LOCK (webhook is authority)
+    const confirmedCount = await Registration.countDocuments({
+      workshopId: payment.workshopId,
+      slot,
+      status: "CONFIRMED",
+    });
+
+    if (confirmedCount >= 30) {
+      payment.status = "FAILED";
+      await payment.save();
+
+      console.error("❌ Slot full. Payment rejected in webhook:", slot);
+      return res.json({ status: "slot_full_rejected" });
+    }
+
+    // 🔒 Mark payment successful
     payment.status = "SUCCESS";
     payment.razorpay_payment_id = paymentEntity.id;
+    payment.method = paymentEntity.method;
     await payment.save();
 
-   const registration = await Registration.findOneAndUpdate(
-  {
-    userId: payment.userId,
-    workshopId: payment.workshopId,
-  },
-  {
-    $set: {
-      paymentId: payment._id,
-      status: "CONFIRMED",
+    // 🔒 Create / update registration
+    const registration = await Registration.findOneAndUpdate(
+      {
+        userId: payment.userId,
+        workshopId: payment.workshopId,
+      },
+      {
+        $set: {
+          paymentId: payment._id,
+          status: "CONFIRMED",
+          slot,
 
-      // 🔒 SNAPSHOT (immutable)
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-    },
-  },
-  { upsert: true, new: true }
-);
-
-
+          // 🔒 SNAPSHOT (immutable)
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+        },
+      },
+      { upsert: true, new: true }
+    );
 
     Promise.resolve()
-  .then(() => sendRegistrationConfirmation(registration._id))
-  .catch((err) =>
-    console.error("❌ Webhook email failed:", err.message)
-  );
+      .then(() => sendRegistrationConfirmation(registration._id))
+      .catch((err) =>
+        console.error("❌ Webhook email failed:", err.message)
+      );
 
-
-    console.log("✅ Payment confirmed via webhook & email sent");
-
-    res.json({ status: "ok" });
+    console.log("✅ Payment confirmed via webhook & registration locked");
+    return res.json({ status: "ok" });
   } catch (error) {
     console.error("🔥 Webhook processing error:", error);
-    res.status(500).send("Webhook error");
+    return res.status(500).send("Webhook error");
   }
 };

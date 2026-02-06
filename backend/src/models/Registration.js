@@ -13,7 +13,15 @@ const registrationSchema = new mongoose.Schema(
       required: true,
     },
 
-    // 🔒 Snapshot fields (immutable business data)
+    // 🔹 SLOT SELECTION
+    slot: {
+      type: String,
+      enum: ["SLOT_1", "SLOT_2"],
+      required: true,
+      index: true,
+    },
+
+    // 🔒 Snapshot fields
     name: {
       type: String,
       required: true,
@@ -36,6 +44,7 @@ const registrationSchema = new mongoose.Schema(
       type: String,
       enum: ["PENDING", "CONFIRMED", "FAILED", "CANCELLED"],
       default: "PENDING",
+      index: true,
     },
 
     attended: {
@@ -57,10 +66,15 @@ const registrationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔒 CRITICAL: prevent duplicate registrations
+// 🔒 Prevent duplicate registration per workshop
 registrationSchema.index(
   { userId: 1, workshopId: 1 },
   { unique: true }
+);
+
+// 🔒 Seat counting helper index
+registrationSchema.index(
+  { workshopId: 1, slot: 1, status: 1 }
 );
 
 export default mongoose.model("Registration", registrationSchema);

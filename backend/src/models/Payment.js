@@ -2,22 +2,18 @@ import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema(
   {
-    // 🔒 Razorpay identifiers
     razorpay_order_id: {
       type: String,
       required: true,
-      
     },
     razorpay_payment_id: {
       type: String,
-      
       sparse: true,
     },
     razorpay_signature: {
       type: String,
     },
 
-    // 🔹 Payment info
     amount: {
       type: Number,
       required: true,
@@ -28,6 +24,7 @@ const paymentSchema = new mongoose.Schema(
       default: "INR",
       uppercase: true,
     },
+
     status: {
       type: String,
       enum: ["CREATED", "SUCCESS", "FAILED", "REFUNDED"],
@@ -35,16 +32,17 @@ const paymentSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🔹 Razorpay metadata
-    receipt: {
+    receipt: String,
+    method: String, // card / upi / netbanking
+
+    // 🔹 SLOT SNAPSHOT
+    slot: {
       type: String,
-     
-    },
-    method: {
-      type: String, // card / upi / netbanking
+      enum: ["SLOT_1", "SLOT_2"],
+      required: true,
+      index: true,
     },
 
-    // 🔹 Snapshot of user details at payment time
     email: {
       type: String,
       lowercase: true,
@@ -56,30 +54,21 @@ const paymentSchema = new mongoose.Schema(
       set: (v) => v.replace(/\D/g, ""),
     },
 
-    // 🔹 Relations
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      
     },
     workshopId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Workshop",
       required: true,
-      
     },
   },
   { timestamps: true }
 );
 
-// 🔒 Uniqueness & idempotency guarantees
-paymentSchema.index(
-  { razorpay_order_id: 1 },
-  { unique: true }
-);
-
-// Prevent duplicate successful captures for same Razorpay payment
+paymentSchema.index({ razorpay_order_id: 1 }, { unique: true });
 paymentSchema.index(
   { razorpay_payment_id: 1 },
   { unique: true, sparse: true }

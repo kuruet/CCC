@@ -9,23 +9,45 @@ import { sendRegistrationConfirmation } from "../services/emailService.js";
 
 export const createPaymentOrder = async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, slot } = req.body;
 
     console.log('📥 Create payment request:', req.body);
 
-    if (!name || !email || !phone) {
+    if (!name || !email || !phone || !slot) {
       return res.status(400).json({ message: 'All fields are required' });
     }
+    if (!["SLOT_1", "SLOT_2"].includes(slot)) {
+  return res.status(400).json({ message: "Invalid slot selected" });
+}
 
     let user = await User.findOne({ email });
     if (!user) {
       user = await User.create({ name, email, phone });
     }
 
+ 
+
+ 
+
     const workshop = await Workshop.findOne();
     if (!workshop) {
       return res.status(404).json({ message: 'Workshop not found' });
     }
+
+    // 🔒 Soft seat check (webhook is final authority)
+const confirmedCount = await Registration.countDocuments({
+  workshopId: workshop._id,
+  slot,
+  status: "CONFIRMED",
+});
+
+if (confirmedCount >= 30) {
+  return res.status(409).json({
+    success: false,
+    message: "Selected slot is full",
+  });
+}
+
 
     // 🔒 STEP: Block duplicate registration per workshop
 const existingRegistration = await Registration.findOne({
@@ -58,6 +80,7 @@ if (existingRegistration) {
       status: 'CREATED',
       userId: user._id,
       workshopId: workshop._id,
+      slot,
     });
 
     return res.status(200).json({
@@ -75,9 +98,22 @@ if (existingRegistration) {
     });
 
   } catch (error) {
-    console.error('❌ createPaymentOrder error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+  console.error('❌ createPaymentOrder error:', error);
+
+  // 🔒 Handle duplicate phone/email (Mongo unique index)
+  if (error.code === 11000) {
+    return res.status(409).json({
+      success: false,
+      message: "This mobile number or email is already registered. Please use a different one.",
+    });
   }
+
+  return res.status(500).json({
+    success: false,
+    message: "Something went wrong. Please try again later.",
+  });
+}
+
 };
 
 export const verifyPayment = async (req, res) => {
@@ -89,13 +125,13 @@ export const verifyPayment = async (req, res) => {
   razorpay_order_id,
   razorpay_payment_id,
   razorpay_signature,
-  workshopId,
+  // workshopId,
 } = req.body;
 
 
     console.log('Step 1: Validating request body');
 
-   if (!razorpay_order_id || !workshopId) {
+   if (!razorpay_order_id) {
   console.log('❌ Validation failed');
   return res.status(400).json({
     success: false,
@@ -106,19 +142,27 @@ export const verifyPayment = async (req, res) => {
 
     console.log('✅ Validation passed');
 
-    console.log('Step 2: Fetching workshop');
-    const workshop = await Workshop.findById(workshopId);
-    if (!workshop) {
-      console.log('❌ Workshop not found');
-      return res.status(404).json({
-        success: false,
-        message: 'Workshop not found',
-      });
-    }
-    console.log('✅ Workshop found:', workshop.title);
+    console.log('Step 2: Checking existing payment');
+let payment = await Payment.findOne({ razorpay_order_id });
 
-    console.log('Step 3: Checking existing payment');
-   let payment = await Payment.findOne({ razorpay_order_id });
+if (!payment) {
+  return res.status(404).json({
+    success: false,
+    message: "Payment order not found",
+  });
+}
+
+console.log('Step 3: Fetching workshop from payment');
+const workshop = await Workshop.findById(payment.workshopId);
+
+if (!workshop) {
+  console.log('❌ Workshop not found');
+  return res.status(404).json({
+    success: false,
+    message: 'Workshop not found',
+  });
+}
+
 
    if (!payment) {
   return res.status(404).json({
@@ -193,11 +237,12 @@ if (!user) {
       console.log('Step 6: Updating registration');
 
       registration = await Registration.findOneAndUpdate(
-  { userId, workshopId },
+  { userId, workshopId: payment.workshopId },
   {
     $set: {
       paymentId: payment._id,
       status: "CONFIRMED",
+      slot: payment.slot,
 
       // 🔒 SNAPSHOT (never rely on User later)
       email: user.email,
