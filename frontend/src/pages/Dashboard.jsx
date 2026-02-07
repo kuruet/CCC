@@ -4,6 +4,10 @@ import {
   updateRegistrationFlags,
 } from "../services/registrationApi";
 
+import { useNavigate } from "react-router-dom";
+import { adminLogout } from "../services/adminAuthApi";
+
+
 const POLL_INTERVAL_MS = 15000;
 
 const Dashboard = () => {
@@ -15,6 +19,9 @@ const Dashboard = () => {
   const [savingMap, setSavingMap] = useState({});
   const isPollingRef = useRef(false);
   const intervalRef = useRef(null);
+
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const loadInitial = async () => {
@@ -90,6 +97,17 @@ const Dashboard = () => {
     }
   };
 
+  const handleLogout = async () => {
+  try {
+    await adminLogout();
+  } catch {
+    // even if logout fails, force redirect
+  } finally {
+    navigate("/login");
+  }
+};
+
+
 
   // console.log(registrations[0]);
 
@@ -98,14 +116,24 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-[#FFF5DF] px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-[#8A733E] mb-2">
-              Online Caricature Workshop Dashboard
-            </h1>
-            <p className="text-[#8A733E] text-sm opacity-75">
-              Manage workshop registrations, attendance, and certificates
-            </p>
-          </div>
+         <div className="mb-8 flex items-start justify-between">
+  <div>
+    <h1 className="text-4xl font-bold text-[#8A733E] mb-2">
+      Online Caricature Workshop Dashboard
+    </h1>
+    <p className="text-[#8A733E] text-sm opacity-75">
+      Manage workshop registrations, attendance, and certificates
+    </p>
+  </div>
+
+  <button
+    onClick={handleLogout}
+    className="border border-[#8A733E] text-[#8A733E] px-4 py-2 rounded-md text-sm font-medium hover:bg-[#8A733E] hover:text-white transition"
+  >
+    Logout
+  </button>
+</div>
+
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -171,14 +199,25 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-[#FFF5DF] px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-[#8A733E] mb-2">
-              Online Caricature Workshop Dashboard
-            </h1>
-            <p className="text-[#8A733E] text-sm opacity-75">
-              Manage workshop registrations, attendance, and certificates
-            </p>
-          </div>
+         <div className="mb-8 flex items-start justify-between">
+  <div>
+    <h1 className="text-4xl font-bold text-[#8A733E] mb-2">
+      Online Caricature Workshop Dashboard
+    </h1>
+    <p className="text-[#8A733E] text-sm opacity-75">
+      Manage workshop registrations, attendance, and certificates
+    </p>
+  </div>
+    <button
+    onClick={handleLogout}
+    className="border border-[#8A733E] text-[#8A733E] px-4 py-2 rounded-md text-sm font-medium hover:bg-[#8A733E] hover:text-white transition"
+  >
+    Logout
+  </button>
+
+   
+</div>
+
           <div className="bg-red-50 border border-red-200 rounded-lg px-6 py-4 text-red-800">
             {error}
           </div>
@@ -190,14 +229,24 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#FFF5DF] px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-[#8A733E] mb-2">
-            Online Caricature Workshop Dashboard
-          </h1>
-          <p className="text-[#8A733E] text-sm opacity-75">
-            Manage workshop registrations, attendance, and certificates
-          </p>
-        </div>
+       <div className="mb-8 flex items-start justify-between">
+  <div>
+    <h1 className="text-4xl font-bold text-[#8A733E] mb-2">
+      Online Caricature Workshop Dashboard
+    </h1>
+    <p className="text-[#8A733E] text-sm opacity-75">
+      Manage workshop registrations, attendance, and certificates
+    </p>
+  </div>
+
+  <button
+    onClick={handleLogout}
+    className="border border-[#8A733E] text-[#8A733E] px-4 py-2 rounded-md text-sm font-medium hover:bg-[#8A733E] hover:text-white transition"
+  >
+    Logout
+  </button>
+</div>
+
 
         {pollError && (
           <div className="sticky top-0 z-10 mb-6 bg-amber-50 border border-amber-200 rounded-lg px-6 py-4 text-amber-800 shadow-sm">

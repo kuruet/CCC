@@ -1,24 +1,58 @@
-// backend/src/routes/adminRoutes.js
 import express from "express";
-import { getAdminRegistrations, getSeatStats } from "../controllers/adminController.js";
+import {
+  getAdminRegistrations,
+  getSeatStats,
+} from "../controllers/adminController.js";
 import { getNotifySubscribers } from "../controllers/notifyAdminController.js";
+import {
+  adminLogin,
+  adminLogout,
+} from "../controllers/adminAuthController.js";
+import { getAdminMe } from "../controllers/adminMeController.js";
+import adminAuthMiddleware from "../middleware/adminAuthMiddleware.js";
 
 const router = express.Router();
 
 /**
- * ⚠️ ADMIN ROUTES (READ-ONLY)
- * NOTE:
- * - No auth middleware yet (as discussed)
- * - Do NOT expose publicly in production without protection
+ * =========================
+ * AUTH ROUTES (PUBLIC)
+ * =========================
+ */
+router.post("/login", adminLogin);
+router.post("/logout", adminLogout);
+
+/**
+ * =========================
+ * AUTH CHECK (PROTECTED)
+ * =========================
+ */
+router.get("/me", adminAuthMiddleware, getAdminMe);
+
+/**
+ * =========================
+ * ADMIN ROUTES (PROTECTED)
+ * =========================
  */
 
 // Get all registrations with payment + slot info
-router.get("/registrations", getAdminRegistrations);
+router.get(
+  "/registrations",
+  adminAuthMiddleware,
+  getAdminRegistrations
+);
 
 // Get seat statistics (slot-wise)
-router.get("/seat-stats", getSeatStats);
+router.get(
+  "/seat-stats",
+  adminAuthMiddleware,
+  getSeatStats
+);
 
 // Get notify-me subscribers list
-router.get("/notify-subscribers", getNotifySubscribers);
+router.get(
+  "/notify-subscribers",
+  adminAuthMiddleware,
+  getNotifySubscribers
+);
 
 export default router;

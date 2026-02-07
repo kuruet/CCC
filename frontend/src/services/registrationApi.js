@@ -5,7 +5,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  * SOURCE: /api/admin/registrations
  */
 export const fetchRegistrations = async () => {
-  const response = await fetch(`${API_BASE_URL}/api/admin/registrations`);
+  const response = await fetch(
+    `${API_BASE_URL}/api/admin/registrations`,
+    {
+      credentials: "include", // 🔑 REQUIRED for admin auth
+    }
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch registrations");
@@ -17,7 +22,6 @@ export const fetchRegistrations = async () => {
     throw new Error(data.message || "Failed to fetch registrations");
   }
 
-  // ✅ Admin API returns `registrations`
   return data.registrations;
 };
 
@@ -26,11 +30,15 @@ export const fetchRegistrations = async () => {
  * SOURCE: /api/registrations/:id
  */
 export const updateRegistrationFlags = async (id, payload) => {
-  const response = await fetch(`${API_BASE_URL}/api/registrations/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/registrations/${id}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // 🔑 REQUIRED for admin auth
+      body: JSON.stringify(payload),
+    }
+  );
 
   if (!response.ok) {
     throw new Error("Failed to update registration");
