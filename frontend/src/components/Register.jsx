@@ -378,7 +378,7 @@ export default function Register() {
                     Live Interactive Session
                   </h3>
                   <p className="text-sm sm:text-base text-[#8A733E]/70">
-                    2 hours of hands-on learning with real-time feedback
+                    8 hours of hands-on learning with real-time feedback
                   </p>
                 </div>
               </div>
@@ -392,7 +392,7 @@ export default function Register() {
                     Professional Techniques
                   </h3>
                   <p className="text-sm sm:text-base text-[#8A733E]/70">
-                    Learn industry secrets from 15+ years of experience
+                    Learn industry secrets from 10+ years of experience
                   </p>
                 </div>
               </div>
@@ -429,7 +429,7 @@ export default function Register() {
             <div className="pt-6 sm:pt-8 border-t border-[#8A733E]/20">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#8A733E]">2 Hours</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#8A733E]">8 Hours</div>
                   <div className="text-sm sm:text-base text-[#8A733E]/60 mt-1">Duration</div>
                 </div>
                 <div>

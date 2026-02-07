@@ -2,17 +2,17 @@ export default function Workdetails() {
   const details = [
     {
       label: 'Date',
-      value: 'Saturday, March 15 & 16, 2025',
+      value: ' March 15 & 16, 2025',
       clarifier: 'Registration closes 24 hours prior'
     },
     {
       label: 'Time',
-      value: '10:00 AM - 4:00 PM',
+      value: '12:00 PM - 4:00 PM ',
       clarifier: 'IST (Indian Standard Time)'
     },
     {
       label: 'Duration',
-      value: '2 Hours',
+      value: '8 Hours',
       clarifier: 'Includes breaks and Q&A'
     },
     {
