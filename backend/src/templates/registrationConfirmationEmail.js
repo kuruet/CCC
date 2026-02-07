@@ -4,13 +4,17 @@ export const registrationConfirmationTemplate = ({
   name,
   workshopTitle,
   whatsappGroupLink,
+  slot,
 }) => {
+  const slotTiming =
+    slot === "SLOT_1" ? "12:00 PM – 4:00 PM" : "6:00 PM – 10:00 PM";
+
   return `
   <!DOCTYPE html>
   <html>
     <head>
       <meta charset="UTF-8" />
-      <title>Workshop Registration Confirmed</title>
+      <title>Your Seat is Confirmed – 2 Day Live Caricature Workshop 🎨</title>
     </head>
     <body style="font-family: Arial, sans-serif; background-color: #f7f7f7; padding: 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
@@ -20,27 +24,33 @@ export const registrationConfirmationTemplate = ({
               
               <tr>
                 <td>
-                  <h2 style="color: #333333;">🎉 Registration Confirmed!</h2>
+                  <h2 style="color: #333333;">🎨 Your Seat is Confirmed!</h2>
                 </td>
               </tr>
 
               <tr>
-                <td style="padding-top: 10px; color: #555555;">
-                  <p>Hi <strong>${name}</strong>,</p>
+                <td style="padding-top: 10px; color: #555555; line-height: 1.6;">
+                  <p>Hello <strong>${name}</strong> 🙂</p>
 
                   <p>
-                    Your registration for the workshop
-                    <strong>${workshopTitle}</strong>
-                    has been successfully confirmed.
+                    Your registration for the <strong>${workshopTitle}</strong>
+                    is successful and your seat has been confirmed.
                   </p>
 
-                  <p>
-                    We’re excited to have you join us!
-                  </p>
+                  <hr style="border: none; border-top: 1px solid #eeeeee; margin: 20px 0;" />
 
+                  <h3 style="color: #333333;">📅 Workshop Details</h3>
+                  <ul>
+                    <li><strong>Type:</strong> 2 Day Live Caricature Workshop</li>
+                    <li><strong>Dates:</strong> Saturday & Sunday</li>
+                    <li><strong>Timing:</strong> ${slotTiming}</li>
+                    <li><strong>Mode:</strong> Live Online</li>
+                  </ul>
+
+                  <h3 style="color: #333333;">📲 What Happens Next?</h3>
                   <p>
-                    👉 Please join the official WhatsApp group for important updates,
-                    announcements, and workshop-related communication:
+                    You will be added to the official WhatsApp workshop group soon.
+                    All instructions, materials, and joining links will be shared there.
                   </p>
 
                   <p style="margin: 20px 0;">
@@ -48,7 +58,7 @@ export const registrationConfirmationTemplate = ({
                       href="${whatsappGroupLink}"
                       style="
                         display: inline-block;
-                        padding: 10px 16px;
+                        padding: 12px 18px;
                         background-color: #25D366;
                         color: #ffffff;
                         text-decoration: none;
@@ -60,11 +70,30 @@ export const registrationConfirmationTemplate = ({
                     </a>
                   </p>
 
+                  <h3 style="color: #333333;">🖊 What You Should Keep Ready</h3>
+                  <ul>
+                    <li>A4 sheets / drawing book</li>
+                    <li>Black pen / pencil</li>
+                    <li>Colors (optional)</li>
+                    <li>Good internet connection</li>
+                  </ul>
+
+                  <h3 style="color: #333333;">⚠ Refund Policy</h3>
                   <p>
-                    If you have any questions, feel free to reply to this email.
+                    <strong>Workshop fees are non-refundable once the seat is booked.</strong>
+                  </p>
+
+                  <h3 style="color: #333333;">📞 Need Help?</h3>
+                  <p>
+                    WhatsApp: <strong>${process.env.SUPPORT_WHATSAPP_NUMBER}</strong><br />
+                    Email: <strong>${process.env.SUPPORT_EMAIL}</strong>
                   </p>
 
                   <p style="margin-top: 30px;">
+                    We’re excited to have you in the workshop and can’t wait to draw with you! 🎨✨
+                  </p>
+
+                  <p style="margin-top: 20px;">
                     Best regards,<br />
                     <strong>Creative Caricature Club</strong>
                   </p>

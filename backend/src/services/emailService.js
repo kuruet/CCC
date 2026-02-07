@@ -11,6 +11,19 @@ function getResendClient() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+// 🔒 Resolve WhatsApp link strictly based on slot
+function getWhatsAppLinkForSlot(slot) {
+  if (slot === "SLOT_1") {
+    return process.env.WHATSAPP_SLOT1_LINK || null;
+  }
+
+  if (slot === "SLOT_2") {
+    return process.env.WHATSAPP_SLOT2_LINK || null;
+  }
+
+  return null;
+}
+
 export const sendRegistrationConfirmation = async (registrationId) => {
   try {
     // 1️⃣ Fetch registration (READ-ONLY)
@@ -28,34 +41,43 @@ export const sendRegistrationConfirmation = async (registrationId) => {
 
     // 3️⃣ Idempotency guard
     if (registration.confirmationSent) {
-      console.log("ℹ️ Email already sent:", registrationId);
+      console.log("ℹ️ Confirmation email already sent:", registrationId);
       return;
     }
 
-    // 4️⃣ Fetch workshop
+    // 4️⃣ Resolve WhatsApp link (STRICT)
+    const whatsappGroupLink = getWhatsAppLinkForSlot(registration.slot);
+    if (!whatsappGroupLink) {
+      console.error(
+        `❌ Missing WhatsApp group link for slot ${registration.slot}. Email NOT sent.`
+      );
+      return;
+    }
+
+    // 5️⃣ Fetch workshop
     const workshop = await Workshop.findById(registration.workshopId).lean();
     if (!workshop) {
       console.warn("⚠️ Workshop not found:", registration.workshopId);
       return;
     }
 
-    // 5️⃣ Build email HTML
+    // 6️⃣ Build email HTML
     const html = registrationConfirmationTemplate({
       name: registration.name,
       workshopTitle: workshop.title,
-      whatsappGroupLink: process.env.WHATSAPP_GROUP_LINK,
+      whatsappGroupLink,
     });
 
-    // 6️⃣ Send email
+    // 7️⃣ Send email
     const resend = getResendClient();
     await resend.emails.send({
-     from: "Creative Caricature Club <no-reply@creativecaricatureclub.com>",
+      from: "Creative Caricature Club <no-reply@creativecaricatureclub.com>",
       to: registration.email,
-      subject: "🎉 Workshop Registration Confirmed",
+      subject: "🎉 Your Seat is Confirmed – 2 Day Live Caricature Workshop",
       html,
     });
 
-    // 7️⃣ Atomic status update (NO full save)
+    // 8️⃣ Atomic success update
     await Registration.updateOne(
       { _id: registrationId, confirmationSent: { $ne: true } },
       {
@@ -66,7 +88,9 @@ export const sendRegistrationConfirmation = async (registrationId) => {
       }
     );
 
-    console.log("✅ Confirmation email sent:", registration.email);
+    console.log(
+      `✅ Confirmation email sent to ${registration.email} (${registration.slot})`
+    );
   } catch (error) {
     // ❗ Never throw — email is a side-effect
     console.error("❌ Email send failed:", error.message);
