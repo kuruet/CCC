@@ -63,10 +63,12 @@ export const sendRegistrationConfirmation = async (registrationId) => {
 
     // 6️⃣ Build email HTML
     const html = registrationConfirmationTemplate({
-      name: registration.name,
-      workshopTitle: workshop.title,
-      whatsappGroupLink,
-    });
+  name: registration.name,
+  workshopTitle: workshop.title,
+  whatsappGroupLink,
+  slot: registration.slot, // ✅ REQUIRED
+});
+
 
     // 7️⃣ Send email
     const resend = getResendClient();

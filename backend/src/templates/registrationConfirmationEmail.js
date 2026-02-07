@@ -47,11 +47,7 @@ export const registrationConfirmationTemplate = ({
                     <li><strong>Mode:</strong> Live Online</li>
                   </ul>
 
-                  <h3 style="color: #333333;">📲 What Happens Next?</h3>
-                  <p>
-                    You will be added to the official WhatsApp workshop group soon.
-                    All instructions, materials, and joining links will be shared there.
-                  </p>
+                  
 
                   <p style="margin: 20px 0;">
                     <a
