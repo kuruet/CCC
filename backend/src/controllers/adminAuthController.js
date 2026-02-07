@@ -37,10 +37,11 @@ export const adminLogin = async (req, res) => {
 res.cookie("admin_token", token, {
   httpOnly: true,
   secure: true,
-  sameSite: "none",
-  domain: ".creativecaricatureclub.com", // 🔑 REQUIRED
+  sameSite: "lax",
+  domain: ".creativecaricatureclub.com",
   maxAge: 12 * 60 * 60 * 1000,
 });
+
 
 
 
@@ -58,12 +59,13 @@ export const adminLogout = async (req, res) => {
   try {
     const isProduction = process.env.NODE_ENV === "production";
 
-    res.clearCookie("admin_token", {
+   res.clearCookie("admin_token", {
   httpOnly: true,
   secure: true,
-  sameSite: "none",
+  sameSite: "lax",
   domain: ".creativecaricatureclub.com",
 });
+
 
 
     return res.status(200).json({ message: "Logout successful" });

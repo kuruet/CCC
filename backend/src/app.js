@@ -17,17 +17,21 @@ const app = express();
  * - NO wildcard origin
  * - Explicit origin echoing
  */
-const allowedOrigins = [
-  "https://creativecaricatureclub.com",
-  "https://www.creativecaricatureclub.com",
-  "http://localhost:5173",
-  "http://localhost:3000",
-];
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [
+        "https://creativecaricatureclub.com",
+        "https://www.creativecaricatureclub.com",
+      ]
+    : [
+        "http://localhost:5173",
+        "http://localhost:3000",
+      ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow non-browser tools (Postman, server-to-server)
+      // Allow server-to-server, Postman, cron jobs, etc.
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -41,6 +45,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 
 /**
  * ✅ Cookie parser (required for admin auth)
