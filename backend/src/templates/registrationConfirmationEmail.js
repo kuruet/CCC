@@ -42,7 +42,7 @@ export const registrationConfirmationTemplate = ({
                   <h3 style="color: #333333;">📅 Workshop Details</h3>
                   <ul>
                     <li><strong>Type:</strong> 2 Day Live Caricature Workshop</li>
-                    <li><strong>Dates:</strong> Saturday & Sunday</li>
+                    <li><strong>Dates:</strong> 14 & 15 March</li>
                     <li><strong>Timing:</strong> ${slotTiming}</li>
                     <li><strong>Mode:</strong> Live Online</li>
                   </ul>
