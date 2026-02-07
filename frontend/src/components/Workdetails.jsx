@@ -2,7 +2,7 @@ export default function Workdetails() {
   const details = [
     {
       label: 'Date',
-      value: ' March 15 & 16, 2025',
+      value: ' March 14 & 15, 2025',
       clarifier: 'Registration closes 24 hours prior'
     },
     {
