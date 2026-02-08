@@ -32,15 +32,16 @@ export const adminLogin = async (req, res) => {
       { expiresIn: "12h" }
     );
 
-   const isProduction = process.env.NODE_ENV === "production";
+  const isProduction = process.env.NODE_ENV === "production";
 
 res.cookie("admin_token", token, {
   httpOnly: true,
-  secure: true,
-  sameSite: "lax",
-  domain: ".creativecaricatureclub.com",
+  secure: isProduction,              // ❌ false on localhost
+  sameSite: isProduction ? "lax" : "lax",
+  domain: isProduction ? ".creativecaricatureclub.com" : undefined,
   maxAge: 12 * 60 * 60 * 1000,
 });
+
 
 
 
@@ -61,10 +62,14 @@ export const adminLogout = async (req, res) => {
 
    res.clearCookie("admin_token", {
   httpOnly: true,
-  secure: true,
+  secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
-  domain: ".creativecaricatureclub.com",
+  domain:
+    process.env.NODE_ENV === "production"
+      ? ".creativecaricatureclub.com"
+      : undefined,
 });
+
 
 
 

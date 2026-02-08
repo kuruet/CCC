@@ -17,6 +17,8 @@ const Dashboard = () => {
   const [pollError, setPollError] = useState("");
   const [actionError, setActionError] = useState("");
   const [savingMap, setSavingMap] = useState({});
+  const [selectedSlot, setSelectedSlot] = useState("ALL");
+
   const isPollingRef = useRef(false);
   const intervalRef = useRef(null);
 
@@ -106,6 +108,14 @@ const Dashboard = () => {
     navigate("/login");
   }
 };
+
+const filteredRegistrations =
+  selectedSlot === "ALL"
+    ? registrations
+    : registrations.filter((r) => r.slot === selectedSlot);
+
+const totalCount = registrations.length;
+const filteredCount = filteredRegistrations.length;
 
 
 
@@ -230,6 +240,9 @@ const Dashboard = () => {
     <div className="min-h-screen bg-[#FFF5DF] px-6 py-8">
       <div className="max-w-7xl mx-auto">
        <div className="mb-8 flex items-start justify-between">
+
+         
+
   <div>
     <h1 className="text-4xl font-bold text-[#8A733E] mb-2">
       Online Caricature Workshop Dashboard
@@ -245,6 +258,55 @@ const Dashboard = () => {
   >
     Logout
   </button>
+</div>
+
+<div className="sticky top-0 z-20 mb-6 bg-[#FFF5DF] border border-[#8A733E] border-opacity-20 rounded-lg px-6 py-4 flex flex-col gap-4">
+
+  {/* Counts */}
+  <div className="flex flex-wrap gap-4 text-[#8A733E] text-sm font-medium">
+    <span>Total: {totalCount}</span>
+    <span>Showing: {filteredCount}</span>
+  </div>
+
+  {/* Slot filters */}
+  <div className="flex flex-wrap gap-3">
+
+    {/* Desktop buttons */}
+    <div className="hidden sm:flex gap-2">
+      {["ALL", "SLOT_1", "SLOT_2"].map((slot) => (
+        <button
+          key={slot}
+          onClick={() => setSelectedSlot(slot)}
+          className={`px-4 py-2 rounded-md border text-sm font-medium transition
+            ${
+              selectedSlot === slot
+                ? "bg-[#8A733E] text-white border-[#8A733E]"
+                : "border-[#8A733E] text-[#8A733E] hover:bg-[#8A733E] hover:text-white"
+            }`}
+        >
+          {slot === "ALL"
+            ? "All Slots"
+            : slot === "SLOT_1"
+            ? "Slot 1"
+            : "Slot 2"}
+        </button>
+      ))}
+    </div>
+
+    {/* Mobile dropdown */}
+    <div className="sm:hidden">
+      <select
+        value={selectedSlot}
+        onChange={(e) => setSelectedSlot(e.target.value)}
+        className="border border-[#8A733E] text-[#8A733E] rounded-md px-3 py-2 bg-white"
+      >
+        <option value="ALL">All Slots</option>
+        <option value="SLOT_1">Slot 1</option>
+        <option value="SLOT_2">Slot 2</option>
+      </select>
+    </div>
+
+  </div>
 </div>
 
 
@@ -290,7 +352,8 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {registrations.map((reg, index) => {
+                 {filteredRegistrations.map((reg, index) => {
+
                     const isSaving = savingMap[reg._id];
                     return (
                       <tr key={reg._id} className="border-b border-[#8A733E] border-opacity-5  hover:bg-opacity-5 transition-colors">
