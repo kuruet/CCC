@@ -52,3 +52,32 @@ export const updateRegistrationFlags = async (id, payload) => {
 
   return data.data; // { _id, attended, certificateIssued }
 };
+
+
+/**
+ * Fetch payment + booking status
+ * SOURCE: /api/payment/status/:orderId
+ *
+ * Used by:
+ * - PaymentPending.jsx
+ * - PaymentStatus.jsx
+ *
+ * READ-ONLY, SAFE FOR POLLING
+ */
+export const fetchPaymentStatus = async (orderId) => {
+  if (!orderId) {
+    throw new Error("Missing orderId");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/payment/status/${orderId}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch payment status");
+  }
+
+  const data = await response.json();
+
+  return data;
+};

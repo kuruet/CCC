@@ -5,6 +5,19 @@ import Workshop from "../models/Workshop.js";
 import { createOrder } from "../services/razorpayService.js";
 import Registration from "../models/Registration.js";
 import { sendRegistrationConfirmation } from "../services/emailService.js";
+import {
+  createRegistration,
+  attachPaymentToRegistration,
+  transitionRegistrationState,
+} from "../services/registrationService.js";
+
+import {
+  createPayment,
+  markPaymentInitiated,
+} from "../services/paymentService.js";
+
+import { REGISTRATION_STATES } from "../utils/registrationStateMachine.js";
+
 
 
 export const createPaymentOrder = async (req, res) => {
@@ -48,8 +61,8 @@ if (confirmedCount >= 30) {
   });
 }
 
-
-    // 🔒 STEP: Block duplicate registration per workshop
+// 🔒 Backend-owned registration (created BEFORE payment)
+// 🔒 STEP: Block duplicate CONFIRMED registration per workshop
 const existingRegistration = await Registration.findOne({
   userId: user._id,
   workshopId: workshop._id,
@@ -59,10 +72,20 @@ const existingRegistration = await Registration.findOne({
 if (existingRegistration) {
   return res.status(409).json({
     success: false,
-    message: " mobile number or email already registered for this workshop. Use Different one",
+    message:
+      "mobile number or email already registered for this workshop. Use different one",
   });
 }
 
+// 🔒 Backend-owned registration (created BEFORE payment)
+const registration = await createRegistration({
+  userId: user._id,
+  workshopId: workshop._id,
+  slot,
+  name: user.name,
+  email: user.email,
+  phone: user.phone,
+});
 
     const amountInPaise = Math.round(workshop.price * 100);
 
@@ -73,15 +96,26 @@ if (existingRegistration) {
 
     console.log('🧾 Razorpay order created:', order.id);
 
-    const payment = await Payment.create({
-      razorpay_order_id: order.id,
-      amount: workshop.price,
-      currency: 'INR',
-      status: 'CREATED',
-      userId: user._id,
-      workshopId: workshop._id,
-      slot,
-    });
+   const payment = await createPayment({
+  razorpay_order_id: order.id,
+  amount: workshop.price,
+  currency: "INR",
+  userId: user._id,
+  workshopId: workshop._id,
+  slot,
+  email: user.email,
+  phone: user.phone,
+});
+
+await attachPaymentToRegistration(registration._id, payment._id);
+
+await transitionRegistrationState(
+  registration._id,
+  REGISTRATION_STATES.PAYMENT_INIT
+);
+
+await markPaymentInitiated(payment._id);
+
 
     return res.status(200).json({
       success: true,
@@ -231,51 +265,23 @@ if (!user) {
 }
 
 
+  // STEP 2: Frontend verification is informational only
+// Registration confirmation will be handled by webhook in STEP 3
 
-    let registration = null;
-    if (payment.status === 'SUCCESS') {
-      console.log('Step 6: Updating registration');
-
-      registration = await Registration.findOneAndUpdate(
-  { userId, workshopId: payment.workshopId },
-  {
-    $set: {
-      paymentId: payment._id,
-      status: "CONFIRMED",
-      slot: payment.slot,
-
-      // 🔒 SNAPSHOT (never rely on User later)
-      email: user.email,
-      name: user.name,
-      phone: user.phone,
-    },
-  },
-  { upsert: true, new: true }
-);
-
-
-
-
-      console.log('✅ Registration updated:', registration._id);
-
-        Promise.resolve()
-  .then(() => sendRegistrationConfirmation(registration._id))
-  .catch((err) =>
-    console.error("❌ Email dispatch failed:", err.message)
-  );
-
-    }
 
     console.log('================ VERIFY PAYMENT END ================\n');
 
-    return res.json({
-      success: payment.status === 'SUCCESS',
-      message: payment.status === 'SUCCESS' ? 'Payment verified' : 'Payment failed',
-      paymentId: payment._id,
-      registrationId: registration?._id || null,
-      workshopTitle: workshop.title,
-      paymentStatus: payment.status,
-    });
+   return res.json({
+  success: payment.status === 'SUCCESS',
+  message:
+    payment.status === 'SUCCESS'
+      ? 'Payment verified. Booking will be confirmed shortly.'
+      : 'Payment failed',
+  paymentId: payment._id,
+  workshopTitle: workshop.title,
+  paymentStatus: payment.status,
+});
+
   } catch (error) {
     console.error('🔥 VERIFY PAYMENT ERROR:', error);
     return res.status(500).json({

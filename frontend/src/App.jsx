@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import Home from "./pages/Home";
 import Portfolio from "./pages/Portfolio";
 import Contact from "./pages/Contact";
@@ -10,15 +11,22 @@ import PrivacyPolicy from "./pages/Privacy";
 import Condition from "./pages/Condition";
 import Refund from "./pages/Refund";
 import Disclaimer from "./pages/Disclaimer";
-import ProtectedRoute from "./routes/ProtectedRoute";
+import Login from "./pages/Login";
+
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import Login from "./pages/Login";
+
+import PaymentPending from "./pages/PaymentPending";
+import PaymentStatus from "./pages/PaymentStatus";
+
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 const App = () => {
   return (
     <Routes>
-      {/* Public routes */}
+      {/* =====================
+          PUBLIC ROUTES
+         ===================== */}
       <Route path="/" element={<Home />} />
       <Route path="/portfolio" element={<Portfolio />} />
       <Route path="/contact" element={<Contact />} />
@@ -32,7 +40,13 @@ const App = () => {
       <Route path="/disclaimer" element={<Disclaimer />} />
       <Route path="/login" element={<Login />} />
 
-      {/* Protected admin routes */}
+      {/* ✅ USER TRUST LAYER (PUBLIC — VERY IMPORTANT) */}
+      <Route path="/payment-pending" element={<PaymentPending />} />
+      <Route path="/payment-status/:orderId" element={<PaymentStatus />} />
+
+      {/* =====================
+          ADMIN ROUTES (PROTECTED)
+         ===================== */}
       <Route
         path="/dashboard"
         element={
@@ -51,7 +65,9 @@ const App = () => {
         }
       />
 
-      {/* Fallback */}
+      {/* =====================
+          FALLBACK
+         ===================== */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

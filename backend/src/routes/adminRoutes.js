@@ -10,6 +10,8 @@ import {
 } from "../controllers/adminAuthController.js";
 import { getAdminMe } from "../controllers/adminMeController.js";
 import adminAuthMiddleware from "../middleware/adminAuthMiddleware.js";
+import { recoverPayment } from "../controllers/adminController.js";
+
 
 const router = express.Router();
 
@@ -47,6 +49,14 @@ router.get(
   adminAuthMiddleware,
   getSeatStats
 );
+
+// Manual payment recovery (ADMIN ONLY)
+router.post(
+  "/recover-payment/:paymentId",
+  adminAuthMiddleware,
+  recoverPayment
+);
+
 
 // Get notify-me subscribers list
 router.get(

@@ -1,5 +1,7 @@
 // backend/src/controllers/adminController.js
 import Registration from "../models/Registration.js";
+import { recoverPaymentById } from "../services/paymentRecoveryService.js";
+
 import Payment from "../models/Payment.js";
 import User from "../models/User.js";
 
@@ -81,6 +83,37 @@ export const getSeatStats = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch seat statistics",
+    });
+  }
+};
+
+
+/**
+ * POST /api/admin/recover-payment/:paymentId
+ * Manual admin recovery for stuck payments
+ */
+export const recoverPayment = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+
+    const result = await recoverPaymentById(paymentId);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        reason: result.reason,
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Payment recovery executed successfully",
+    });
+  } catch (error) {
+    console.error("❌ Admin payment recovery error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Payment recovery failed",
     });
   }
 };

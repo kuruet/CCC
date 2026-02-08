@@ -4,18 +4,17 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 
 import paymentRoutes from "./routes/paymentRoutes.js";
-import webhookRoutes from "./routes/webhookRoutes.js";
 import registrationRoutes from "./routes/registrationRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import publicRoutes from "./routes/publicRoutes.js";
+import { razorpayWebhookHandler } from "./controllers/razorpayWebhookController.js";
 
 const app = express();
 
 /**
- * ✅ CORS CONFIG (CRITICAL)
- * - Required for httpOnly cookies
- * - NO wildcard origin
- * - Explicit origin echoing
+ * =========================
+ * CORS (SAFE + RAZORPAY OK)
+ * =========================
  */
 const allowedOrigins =
   process.env.NODE_ENV === "production"
@@ -23,56 +22,61 @@ const allowedOrigins =
         "https://creativecaricatureclub.com",
         "https://www.creativecaricatureclub.com",
       ]
-    : [
-        "http://localhost:5173",
-        "http://localhost:3000",
-      ];
+    : ["http://localhost:5173", "http://localhost:3000"];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server, Postman, cron jobs, etc.
+      // Razorpay / server-to-server (no origin header)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      return callback(null, false);
     },
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
+/**
+ * =========================
+ * RAZORPAY WEBHOOK (CRITICAL)
+ * =========================
+ * MUST be BEFORE json parser
+ * MUST use raw body
+ * MUST be defined at app-level
+ */
+app.post(
+  "/api/webhooks/razorpay",
+  bodyParser.raw({ type: "application/json" }),
+  razorpayWebhookHandler
+);
 
 /**
- * ✅ Cookie parser (required for admin auth)
+ * =========================
+ * NORMAL MIDDLEWARE
+ * =========================
  */
 app.use(cookieParser());
-
-/**
- * ✅ Razorpay Webhook
- * MUST come BEFORE bodyParser.json()
- */
-app.use("/api/webhooks", webhookRoutes);
-
-/**
- * ✅ Normal JSON parsing
- */
 app.use(bodyParser.json());
 
-// Existing routes
+/**
+ * =========================
+ * ROUTES
+ * =========================
+ */
 app.use("/api/payment", paymentRoutes);
 app.use("/api/registrations", registrationRoutes);
-
-// Admin routes
 app.use("/api/admin", adminRoutes);
-
 app.use("/api/public", publicRoutes);
 
-// Health check
+/**
+ * =========================
+ * HEALTH
+ * =========================
+ */
 app.get("/", (req, res) => {
   res.send("Backend is running!");
 });

@@ -3,6 +3,11 @@ import Registration from "../models/Registration.js";
 /**
  * GET /api/registrations
  * Dashboard – fetch confirmed registrations
+ *
+ * NOTE:
+ * - Read-only endpoint
+ * - CONFIRMED remains the only visible state for admin
+ * - Safe even after lifecycle expansion
  */
 export const getRegistrations = async (req, res) => {
   try {
@@ -12,14 +17,15 @@ export const getRegistrations = async (req, res) => {
       .select(
         "_id name email phone attended certificateIssued createdAt"
       )
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // safe for read-only dashboards
 
     return res.status(200).json({
       success: true,
       data: registrations,
     });
   } catch (error) {
-    console.error("Error fetching registrations:", error);
+    console.error("[getRegistrations] Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -28,18 +34,20 @@ export const getRegistrations = async (req, res) => {
   }
 };
 
-
- 
 /**
  * PATCH /api/registrations/:id
- * Update attended / certificateIssued flags (dashboard only)
+ * Dashboard-only: update attended / certificateIssued flags
+ *
+ * HARD RULE:
+ * - Only CONFIRMED registrations can be modified
+ * - No lifecycle state changes allowed here
  */
 export const updateRegistrationFlags = async (req, res) => {
   try {
     const { id } = req.params;
     const { attended, certificateIssued } = req.body;
 
-    // Whitelist validation
+    // 🔒 Strict whitelist validation
     const updateData = {};
 
     if (typeof attended === "boolean") {
@@ -50,7 +58,6 @@ export const updateRegistrationFlags = async (req, res) => {
       updateData.certificateIssued = certificateIssued;
     }
 
-    // No valid fields provided
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,
@@ -58,16 +65,25 @@ export const updateRegistrationFlags = async (req, res) => {
       });
     }
 
-    const updatedRegistration = await Registration.findOneAndUpdate(
-      { _id: id, status: "CONFIRMED" }, // extra safety
-      { $set: updateData },
-      { new: true }
-    ).select("_id attended certificateIssued");
+    const updatedRegistration =
+      await Registration.findOneAndUpdate(
+        {
+          _id: id,
+          status: "CONFIRMED", // 🔒 terminal-state protection
+        },
+        {
+          $set: updateData,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      ).select("_id attended certificateIssued");
 
     if (!updatedRegistration) {
       return res.status(404).json({
         success: false,
-        message: "Registration not found",
+        message: "Registration not found or not confirmed",
       });
     }
 
@@ -76,7 +92,10 @@ export const updateRegistrationFlags = async (req, res) => {
       data: updatedRegistration,
     });
   } catch (error) {
-    console.error("Error updating registration:", error);
+    console.error(
+      "[updateRegistrationFlags] Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,

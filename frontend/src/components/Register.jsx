@@ -233,38 +233,18 @@ export default function Register() {
           try {
             setIsProcessing(true);
 
-            const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                userId,
-                // workshopId: "6975fb4c0ae1a8e3014f4e87",
-              }),
-            });
+            // 🔒 Backend webhook is authoritative.
+// Frontend only redirects user to trust layer.
 
-            const verifyData = await verifyRes.json();
 
             // 🔑 RESET STATES ONCE
             setIsProcessing(false);
             setIsPaying(false);
 
-            if (verifyData.success) {
-                await fetchSeatAvailability();
-              setSuccessModal({
-                open: true,
-                type: "success",
-                message: "Payment received successfully. Your registration will be confirmed shortly. Please check your email.",
-              });
-            } else {
-              setSuccessModal({
-                open: true,
-                type: "error",
-                message: verifyData.message || "Payment verification failed.",
-              });
-            }
+            // 🔒 Do NOT wait for verification
+// 🔒 Do NOT assume confirmation
+window.location.href = `/payment-pending?orderId=${response.razorpay_order_id}`;
+
           } catch (err) {
             console.error("🔥 Verification error", err);
             setIsProcessing(false);
@@ -278,12 +258,16 @@ export default function Register() {
         },
 
         // 4️⃣ User closes Razorpay
-        modal: {
-          ondismiss: function () {
-            console.log("⚠️ Razorpay closed by user");
-            setIsPaying(false);
-          },
-        },
+       modal: {
+  ondismiss: function () {
+    console.log("⚠️ Razorpay closed by user");
+    setIsPaying(false);
+
+    // Trust layer fallback
+    window.location.href = `/payment-pending`;
+  },
+},
+
       };
 
       console.log("🧾 Opening Razorpay checkout");

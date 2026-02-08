@@ -8,15 +8,30 @@ import adminAuthMiddleware from "../middleware/adminAuthMiddleware.js";
 const router = express.Router();
 
 /**
- * Dashboard registrations (ADMIN ONLY)
- * GET /api/registrations
+ * ADMIN REGISTRATION ROUTES
+ * -------------------------
+ * All routes here are ADMIN-ONLY.
+ * Registration lifecycle is NOT modified here.
+ * Payment & confirmation are handled elsewhere.
  */
-router.get("/", adminAuthMiddleware, getRegistrations);
+
+// 🔒 Protect all admin registration routes
+router.use(adminAuthMiddleware);
 
 /**
- * Update registration flags (ADMIN ONLY)
- * PATCH /api/registrations/:id
+ * Dashboard registrations
+ * GET /api/registrations
  */
-router.patch("/:id", adminAuthMiddleware, updateRegistrationFlags);
+router.get("/", getRegistrations);
+
+/**
+ * Update registration flags
+ * PATCH /api/registrations/:id
+ *
+ * Only allows:
+ * - attended
+ * - certificateIssued
+ */
+router.patch("/:id", updateRegistrationFlags);
 
 export default router;

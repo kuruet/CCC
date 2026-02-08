@@ -6,27 +6,41 @@ const ProtectedRoute = ({ children }) => {
   const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const location = useLocation();
+  // 🔓 Public routes that do NOT require admin auth
+const publicPaths = [
+  "/payment-pending",
+  "/payment-status",
+];
 
-  useEffect(() => {
-    let active = true;
 
-    const verify = async () => {
-      try {
-        await getAdminMe();
-        if (active) setAuthorized(true);
-      } catch {
-        if (active) setAuthorized(false);
-      } finally {
-        if (active) setChecking(false);
-      }
-    };
+useEffect(() => {
+  let active = true;
 
-    verify();
+  // 🔓 Skip admin auth for public trust pages
+  if (publicPaths.some((path) => location.pathname.startsWith(path))) {
+    setAuthorized(true);
+    setChecking(false);
+    return;
+  }
 
-    return () => {
-      active = false;
-    };
-  }, [location.pathname]); // 🔑 RE-CHECK ON EVERY ROUTE ENTRY
+  const verify = async () => {
+    try {
+      await getAdminMe();
+      if (active) setAuthorized(true);
+    } catch {
+      if (active) setAuthorized(false);
+    } finally {
+      if (active) setChecking(false);
+    }
+  };
+
+  verify();
+
+  return () => {
+    active = false;
+  };
+}, [location.pathname]);
+
 
   if (checking) {
     return (
