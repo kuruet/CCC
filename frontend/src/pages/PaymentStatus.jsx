@@ -39,12 +39,15 @@ const PaymentStatus = () => {
     const pollStatus = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/api/registration/status?orderId=${orderId}`
-        );
+  `${API_BASE_URL}/api/payment/status/${orderId}`,
+  { cache: "no-store" }
+);
+
 
         const data = await res.json();
 
-        if (!data.success) return;
+        if (!data || !data.status) return;
+
 
         if (data.status === "CONFIRMED") {
           setStatus("CONFIRMED");
@@ -62,11 +65,13 @@ const PaymentStatus = () => {
 
       elapsed = Date.now() - startTime;
 
-      if (elapsed > MAX_POLL_TIME_MS) {
-        clearInterval(interval);
-        setStatus("FAILED");
-        setError("Confirmation timed out. Please contact support.");
-      }
+    if (elapsed > MAX_POLL_TIME_MS) {
+  clearInterval(interval);
+  setError(
+    "Payment received. Confirmation is taking longer than usual. You will receive an email shortly."
+  );
+}
+
     };
 
     pollStatus(); // immediate
