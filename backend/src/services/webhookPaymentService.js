@@ -82,6 +82,15 @@ export async function handlePaymentCaptured(payload) {
   /**
  * 4️⃣ Ensure final CONFIRMED state (state machine enforces validity)
  */
+// Ensure valid state progression enforced by state machine
+
+if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
+  await transitionRegistrationState(
+    registration._id,
+    REGISTRATION_STATES.PAID
+  );
+}
+
 await transitionRegistrationState(
   registration._id,
   REGISTRATION_STATES.CONFIRMED

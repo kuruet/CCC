@@ -40,8 +40,11 @@ const App = () => {
       <Route path="/disclaimer" element={<Disclaimer />} />
       <Route path="/login" element={<Login />} />
 
-      {/* ✅ USER TRUST LAYER (PUBLIC — VERY IMPORTANT) */}
+      {/* =====================
+          PAYMENT TRUST LAYER (PUBLIC, ISOLATED)
+         ===================== */}
       <Route path="/payment-pending" element={<PaymentPending />} />
+      <Route path="/payment-status" element={<PaymentStatus />} />
       <Route path="/payment-status/:orderId" element={<PaymentStatus />} />
 
       {/* =====================
@@ -66,9 +69,9 @@ const App = () => {
       />
 
       {/* =====================
-          FALLBACK
+          SAFE FALLBACK (NO LOGIN REDIRECT)
          ===================== */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
