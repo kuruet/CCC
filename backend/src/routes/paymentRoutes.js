@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/create-order", validateCreateOrder, createPaymentOrder);
 
 // 🔒 Legacy endpoint (kept for backward compatibility)
-router.post("/verify", verifyPayment);
+// router.post("/verify", verifyPayment);
 
 // 🔓 User trust layer (READ-ONLY, SAFE FOR POLLING)
 router.get("/status/:orderId", getPaymentStatus);

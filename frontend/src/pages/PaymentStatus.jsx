@@ -1,20 +1,110 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 /**
- * PaymentStatus
- * -------------
- * Generic status page for showing final or intermediate
- * payment / booking states.
+ * PaymentStatus (PRODUCTION-READY)
+ * --------------------------------
+ * Backend-authoritative payment confirmation page.
  *
- * This component is UI-only.
- * Actual status resolution happens via backend/webhook.
+ * Rules:
+ * - Frontend NEVER assumes success
+ * - Webhook is the only authority
+ * - This page polls backend until final state
  */
 
-const PaymentStatus = ({
-  title = "Checking Booking Status…",
-  message = "Please wait while we confirm your booking.",
-  subMessage = "This may take a few moments.",
-  showSpinner = true,
+const POLL_INTERVAL_MS = 3000;      // 3 seconds
+const MAX_POLL_TIME_MS = 2 * 60 * 1000; // 2 minutes
+
+const PaymentStatus = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const orderId = searchParams.get("orderId");
+
+  const [status, setStatus] = useState("CHECKING"); // CHECKING | CONFIRMED | FAILED
+  const [error, setError] = useState(null);
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  useEffect(() => {
+    if (!orderId) {
+      setStatus("FAILED");
+      setError("Missing order reference.");
+      return;
+    }
+
+    let elapsed = 0;
+    const startTime = Date.now();
+
+    const pollStatus = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/registration/status?orderId=${orderId}`
+        );
+
+        const data = await res.json();
+
+        if (!data.success) return;
+
+        if (data.status === "CONFIRMED") {
+          setStatus("CONFIRMED");
+          clearInterval(interval);
+          navigate("/payment-success", { replace: true });
+        }
+
+        if (data.status === "FAILED" || data.status === "CANCELLED") {
+          setStatus("FAILED");
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.error("Status polling error:", err);
+      }
+
+      elapsed = Date.now() - startTime;
+
+      if (elapsed > MAX_POLL_TIME_MS) {
+        clearInterval(interval);
+        setStatus("FAILED");
+        setError("Confirmation timed out. Please contact support.");
+      }
+    };
+
+    pollStatus(); // immediate
+    const interval = setInterval(pollStatus, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [orderId, navigate, API_BASE_URL]);
+
+  // ---------------- UI STATES ----------------
+
+  if (status === "FAILED") {
+    return (
+      <StatusLayout
+        title="Payment Not Confirmed"
+        message={error || "Your payment could not be confirmed."}
+        subMessage="If money was deducted, it will be auto-refunded within 3–5 working days."
+        showSpinner={false}
+      />
+    );
+  }
+
+  return (
+    <StatusLayout
+      title="Confirming Your Booking…"
+      message="We are verifying your payment securely."
+      subMessage="This may take a few moments. Please do not refresh."
+      showSpinner={true}
+    />
+  );
+};
+
+// ---------------- UI LAYOUT ----------------
+
+const StatusLayout = ({
+  title,
+  message,
+  subMessage,
+  showSpinner,
 }) => {
   return (
     <div
@@ -38,14 +128,9 @@ const PaymentStatus = ({
 
         <div
           className="rounded-xl p-5 mb-6"
-          style={{
-            backgroundColor: "#FFF",
-            color: "#8A733E",
-          }}
+          style={{ backgroundColor: "#FFF", color: "#8A733E" }}
         >
-          <p className="text-sm sm:text-base">
-            {subMessage}
-          </p>
+          <p className="text-sm sm:text-base">{subMessage}</p>
         </div>
 
         {showSpinner && (
@@ -64,7 +149,7 @@ const PaymentStatus = ({
           className="text-xs opacity-80"
           style={{ color: "#8A733E" }}
         >
-          Please do not refresh or make another payment.
+          Please do not make another payment.
         </p>
       </div>
     </div>

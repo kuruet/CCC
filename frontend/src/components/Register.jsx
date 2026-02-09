@@ -227,46 +227,32 @@ export default function Register() {
         theme: { color: "#8A733E" },
 
         // 3️⃣ Payment success handler
-        handler: async function (response) {
-          console.log("🟢 Razorpay handler triggered");
+       handler: function (response) {
+  console.log("🟡 Razorpay payment completed, awaiting backend confirmation");
 
-          try {
-            setIsProcessing(true);
+  // IMPORTANT:
+  // - This does NOT mean payment is confirmed
+  // - Webhook is the ONLY authority
 
-            // 🔒 Backend webhook is authoritative.
-// Frontend only redirects user to trust layer.
+  setIsPaying(false);
 
+  // Redirect user to trust layer (backend-confirmed page)
+  window.location.replace(
+    `/payment-pending?orderId=${response.razorpay_order_id}`
+  );
+},
 
-            // 🔑 RESET STATES ONCE
-            setIsProcessing(false);
-            setIsPaying(false);
-
-            // 🔒 Do NOT wait for verification
-// 🔒 Do NOT assume confirmation
-window.location.href = `/payment-pending?orderId=${response.razorpay_order_id}`;
-
-          } catch (err) {
-            console.error("🔥 Verification error", err);
-            setIsProcessing(false);
-            setIsPaying(false);
-            setSuccessModal({
-              open: true,
-              type: "error",
-              message: "Server error during payment verification.",
-            });
-          }
-        },
 
         // 4️⃣ User closes Razorpay
-       modal: {
+      modal: {
   ondismiss: function () {
-    console.log("⚠️ Razorpay closed by user");
     setIsPaying(false);
 
-    // Trust layer fallback
-    window.location.href = `/payment-pending`;
+    // Explicit cancellation
+    window.location.href = `/payment-cancelled`;
   },
 },
+
 
       };
 

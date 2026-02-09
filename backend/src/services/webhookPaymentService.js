@@ -79,36 +79,42 @@ export async function handlePaymentCaptured(payload) {
    * 4️⃣ Transition PAYMENT_INIT → PAID
    * (only if not already done)
    */
-  if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
-    await transitionRegistrationState(
-      registration._id,
-      REGISTRATION_STATES.PAID
-    );
-  }
-
   /**
-   * 5️⃣ Transition PAID → CONFIRMED
-   */
-  if (registration.status !== REGISTRATION_STATES.CONFIRMED) {
-    await transitionRegistrationState(
-      registration._id,
-      REGISTRATION_STATES.CONFIRMED
-    );
-  }
+ * 4️⃣ Ensure final CONFIRMED state (state machine enforces validity)
+ */
+await transitionRegistrationState(
+  registration._id,
+  REGISTRATION_STATES.CONFIRMED
+);
+
 
   /**
    * 6️⃣ Send confirmation email (idempotent)
    */
-  if (!registration.confirmationSent) {
-    Promise.resolve()
-      .then(() => sendRegistrationConfirmation(registration._id))
-      .catch((err) =>
-        console.error(
-          "❌ Webhook email dispatch failed:",
-          err.message
-        )
-      );
+/**
+ * 6️⃣ Send confirmation email (STRICT idempotency)
+ */
+const updated = await Registration.findOneAndUpdate(
+  {
+    _id: registration._id,
+    confirmationSent: false,
+  },
+  {
+    $set: { confirmationSent: true },
   }
+);
+
+if (updated) {
+  Promise.resolve()
+    .then(() => sendRegistrationConfirmation(registration._id))
+    .catch((err) =>
+      console.error(
+        "❌ Webhook email dispatch failed:",
+        err.message
+      )
+    );
+}
+
 
   return {
     success: true,

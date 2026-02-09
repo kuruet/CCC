@@ -1,19 +1,34 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 /**
- * PaymentPending
- * --------------
- * Shown when payment is completed but
- * booking confirmation is still processing.
+ * PaymentPending (PRODUCTION-READY)
+ * --------------------------------
+ * Transitional trust-layer page.
  *
- * IMPORTANT:
- * - Informational only
- * - No polling
- * - No assumptions
- * - Webhook is the source of truth
+ * RULES:
+ * - NEVER say "Payment Successful"
+ * - NEVER assume booking is confirmed
+ * - Redirects user to backend-authoritative status page
+ * - Webhook is the only source of truth
  */
 
 const PaymentPending = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const orderId = searchParams.get("orderId");
+
+  useEffect(() => {
+    // If orderId exists, move user to authoritative status page
+    if (orderId) {
+      navigate(`/payment-status?orderId=${orderId}`, { replace: true });
+    } else {
+      // Defensive fallback: no order reference
+      navigate("/payment-status", { replace: true });
+    }
+  }, [orderId, navigate]);
+
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
@@ -24,16 +39,14 @@ const PaymentPending = () => {
           className="text-3xl sm:text-4xl font-semibold mb-4"
           style={{ color: "#8A733E" }}
         >
-          Payment Successful 🎉
+          Confirming Your Payment…
         </h1>
 
         <p
           className="text-base sm:text-lg mb-6"
           style={{ color: "#8A733E" }}
         >
-          Your payment has been received successfully.
-          <br />
-          We are now confirming your booking.
+          Please wait while we securely verify your payment.
         </p>
 
         <div
@@ -44,26 +57,27 @@ const PaymentPending = () => {
           }}
         >
           <p className="text-sm sm:text-base">
-            This usually takes a few moments.
+            This may take a few moments.
             <br />
-            You don’t need to do anything.
+            Do not refresh or attempt another payment.
           </p>
         </div>
 
-        <p
-          className="text-sm sm:text-base"
-          style={{ color: "#8A733E" }}
-        >
-          You will receive a confirmation email shortly.
-          <br />
-          If you don’t see it, please check your spam folder.
-        </p>
+        <div className="flex justify-center mb-6">
+          <div
+            className="h-8 w-8 border-4 border-t-transparent rounded-full animate-spin"
+            style={{
+              borderColor: "#8A733E",
+              borderTopColor: "transparent",
+            }}
+          />
+        </div>
 
         <p
-          className="text-xs mt-6 opacity-80"
+          className="text-xs opacity-80"
           style={{ color: "#8A733E" }}
         >
-          Please don’t refresh or retry payment.
+          You will be notified once confirmation is complete.
         </p>
       </div>
     </div>
