@@ -40,10 +40,9 @@ export const sendRegistrationConfirmation = async (registrationId) => {
     }
 
     // 3️⃣ Idempotency guard
-    if (registration.confirmationSent) {
-      console.log("ℹ️ Confirmation email already sent:", registrationId);
-      return;
-    }
+    // ❌ NO idempotency check here
+// Idempotency is enforced by webhookPaymentService
+
 
     // 4️⃣ Resolve WhatsApp link (STRICT)
     const whatsappGroupLink = getWhatsAppLinkForSlot(registration.slot);
@@ -79,16 +78,7 @@ export const sendRegistrationConfirmation = async (registrationId) => {
       html,
     });
 
-    // 8️⃣ Atomic success update
-    await Registration.updateOne(
-      { _id: registrationId, confirmationSent: { $ne: true } },
-      {
-        $set: {
-          confirmationSent: true,
-          confirmationSentAt: new Date(),
-        },
-      }
-    );
+   
 
     console.log(
       `✅ Confirmation email sent to ${registration.email} (${registration.slot})`

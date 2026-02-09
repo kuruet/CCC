@@ -122,10 +122,10 @@ const registrationSchema = new mongoose.Schema(
       index: true,
     },
 
-    confirmationSentAt: {
+  confirmationSentAt: {
   type: Date,
-  immutable: true,
 },
+
 
   },
   { timestamps: true }
@@ -137,10 +137,11 @@ registrationSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      status: { $ne: "FAILED" },
+      status: { $in: ["CREATED", "PAYMENT_INIT", "PAID", "CONFIRMED"] },
     },
   }
 );
+
 
 
 // 🔒 Seat counting helper index

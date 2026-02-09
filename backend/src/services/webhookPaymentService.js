@@ -103,26 +103,29 @@ await transitionRegistrationState(
 /**
  * 6️⃣ Send confirmation email (STRICT idempotency)
  */
-const updated = await Registration.findOneAndUpdate(
-  {
-    _id: registration._id,
-    confirmationSent: false,
-  },
-  {
-    $set: { confirmationSent: true },
-  }
-);
+/**
+ * 6️⃣ Send confirmation email (PRODUCTION SAFE)
+ * - Send email first
+ * - Mark confirmationSent ONLY after success
+ */
+if (!registration.confirmationSent) {
+  try {
+    await sendRegistrationConfirmation(registration._id);
 
-if (updated) {
-  Promise.resolve()
-    .then(() => sendRegistrationConfirmation(registration._id))
-    .catch((err) =>
-      console.error(
-        "❌ Webhook email dispatch failed:",
-        err.message
-      )
+    await Registration.updateOne(
+      { _id: registration._id },
+      { $set: { confirmationSent: true } }
     );
+  } catch (err) {
+    console.error(
+      "❌ Confirmation email failed, will retry on webhook retry:",
+      err.message
+    );
+    // DO NOT set confirmationSent
+    // Webhook retry will re-attempt safely
+  }
 }
+
 
 
   return {
