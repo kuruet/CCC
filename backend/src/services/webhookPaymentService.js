@@ -116,19 +116,26 @@ const seatClaim = await Workshop.findOneAndUpdate(
 );
 
 if (!seatClaim) {
-  // ❌ Seat already full
+  /**
+   * Seat full AFTER payment capture
+   * This is a BOOKING cancellation, not a payment failure
+   */
   await transitionRegistrationState(
     registration._id,
-    REGISTRATION_STATES.FAILED
+    REGISTRATION_STATES.CANCELLED
   );
 
-  await markPaymentFailed(razorpayOrderId);
+  // ❌ DO NOT mark payment failed
+  // Payment is already PAID at Razorpay
+  // Refund should be handled separately
 
   return {
     success: false,
-    message: "Seat limit exceeded. Payment will be refunded.",
+    message:
+      "Seat limit exceeded. Booking cancelled. Refund will be processed.",
   };
 }
+
 
 
 /**

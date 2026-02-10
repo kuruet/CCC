@@ -89,6 +89,23 @@ export const getPaymentStatus = async (req, res) => {
       }
     }
 
+
+    /**
+ * Booking cancelled after payment (seat full)
+ */
+if (
+  registration &&
+  registration.status === "CANCELLED"
+) {
+  return res.json({
+    success: false,
+    status: "CANCELLED",
+    paymentStatus: payment.status,
+    message:
+      "Payment was successful but the workshop was full. Your booking was cancelled and a refund will be processed.",
+  });
+}
+
     /**
      * Booking fully confirmed
      */

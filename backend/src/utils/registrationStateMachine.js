@@ -20,12 +20,14 @@
  * All possible registration states
  */
 export const REGISTRATION_STATES = Object.freeze({
-  CREATED: "CREATED",          // Registration document created
-  PAYMENT_INIT: "PAYMENT_INIT",// Razorpay order created / payment started
-  PAID: "PAID",                // Payment confirmed by Razorpay (webhook)
-  CONFIRMED: "CONFIRMED",      // Seat locked + email sent
-  FAILED: "FAILED",            // Payment failed / expired
+  CREATED: "CREATED",
+  PAYMENT_INIT: "PAYMENT_INIT",
+  PAID: "PAID",
+  CONFIRMED: "CONFIRMED",
+  FAILED: "FAILED",       // payment failed before capture
+  CANCELLED: "CANCELLED", // payment captured, booking rejected
 });
+
 
 /**
  * Allowed state transitions
@@ -43,9 +45,11 @@ const ALLOWED_TRANSITIONS = Object.freeze({
     REGISTRATION_STATES.FAILED,
   ],
 
-  [REGISTRATION_STATES.PAID]: [
-    REGISTRATION_STATES.CONFIRMED,
-  ],
+ [REGISTRATION_STATES.PAID]: [
+  REGISTRATION_STATES.CONFIRMED,
+  REGISTRATION_STATES.CANCELLED,
+],
+
 
   [REGISTRATION_STATES.CONFIRMED]: [
     // Terminal state — no transitions allowed
@@ -98,7 +102,9 @@ export function assertValidTransition(fromState, toState) {
  */
 export function isTerminalState(state) {
   return (
-    state === REGISTRATION_STATES.CONFIRMED ||
-    state === REGISTRATION_STATES.FAILED
-  );
+  state === REGISTRATION_STATES.CONFIRMED ||
+  state === REGISTRATION_STATES.FAILED ||
+  state === REGISTRATION_STATES.CANCELLED
+);
+
 }

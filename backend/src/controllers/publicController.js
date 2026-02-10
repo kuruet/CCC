@@ -26,7 +26,8 @@ const slot2Filled = workshop.slots.SLOT_2.confirmed || 0;
         },
         SLOT_2: {
           filled: slot2Filled,
-          remaining: Math.max(MAX_SEATS_PER_SLOT - slot1Filled, 0),
+          remaining: Math.max(MAX_SEATS_PER_SLOT - slot2Filled, 0),
+
 
         },
       },
