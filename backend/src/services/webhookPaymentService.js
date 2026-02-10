@@ -27,6 +27,9 @@ import {
 import { REGISTRATION_STATES } from "../utils/registrationStateMachine.js";
 import { sendRegistrationConfirmation } from "./emailService.js";
 
+
+const MAX_SEATS_PER_SLOT = Number(process.env.MAX_SEATS_PER_SLOT || 30);
+
 /**
  * Handle successful Razorpay payment webhook
  *
@@ -91,10 +94,39 @@ if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
   );
 }
 
+/**
+ * 4.5️⃣ Enforce seat limit (AUTHORITATIVE)
+ * This is the LAST-SEAT LOCK
+ */
+const confirmedCount = await Registration.countDocuments({
+  workshopId: registration.workshopId,
+  slot: registration.slot,
+  status: REGISTRATION_STATES.CONFIRMED,
+});
+
+if (confirmedCount >= MAX_SEATS_PER_SLOT) {
+  // ❌ Seat full → do NOT confirm
+  await transitionRegistrationState(
+    registration._id,
+    REGISTRATION_STATES.FAILED
+  );
+
+  await markPaymentFailed(razorpayOrderId);
+
+  return {
+    success: false,
+    message: "Seat limit exceeded. Payment will be refunded.",
+  };
+}
+
+/**
+ * 5️⃣ Final confirmation (SAFE)
+ */
 await transitionRegistrationState(
   registration._id,
   REGISTRATION_STATES.CONFIRMED
 );
+
 
 
   /**

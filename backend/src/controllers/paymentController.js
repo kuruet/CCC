@@ -18,6 +18,8 @@ import {
 
 import { REGISTRATION_STATES } from "../utils/registrationStateMachine.js";
 
+const MAX_SEATS_PER_SLOT = Number(process.env.MAX_SEATS_PER_SLOT || 30);
+
 
 
 export const createPaymentOrder = async (req, res) => {
@@ -54,20 +56,22 @@ const confirmedCount = await Registration.countDocuments({
   status: "CONFIRMED",
 });
 
-if (confirmedCount >= 30) {
+if (confirmedCount >= MAX_SEATS_PER_SLOT) {
   return res.status(409).json({
     success: false,
     message: "Selected slot is full",
   });
 }
 
+
 // 🔒 Backend-owned registration (created BEFORE payment)
 // 🔒 STEP: Block duplicate CONFIRMED registration per workshop
 const existingRegistration = await Registration.findOne({
   userId: user._id,
   workshopId: workshop._id,
-  status: "CONFIRMED",
+  status: { $in: ["PAYMENT_INIT", "PAID", "CONFIRMED"] },
 });
+
 
 if (existingRegistration) {
   return res.status(409).json({
