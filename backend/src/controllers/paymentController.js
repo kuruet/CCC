@@ -50,18 +50,23 @@ export const createPaymentOrder = async (req, res) => {
     }
 
     // 🔒 Soft seat check (webhook is final authority)
-const confirmedCount = await Registration.countDocuments({
-  workshopId: workshop._id,
-  slot,
-  status: "CONFIRMED",
-});
+// 🔒 Soft seat check (Workshop counter, NOT authoritative)
+const slotInfo = workshop.slots?.[slot];
 
-if (confirmedCount >= MAX_SEATS_PER_SLOT) {
+if (!slotInfo) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid workshop slot configuration",
+  });
+}
+
+if (slotInfo.confirmed >= MAX_SEATS_PER_SLOT) {
   return res.status(409).json({
     success: false,
     message: "Selected slot is full",
   });
 }
+
 
 
 // 🔒 Backend-owned registration (created BEFORE payment)

@@ -11,6 +11,7 @@
  *
  * This service is called by webhookController.js
  */
+import Workshop from "../models/Workshop.js";
 
 import Payment from "../models/Payment.js";
 import Registration from "../models/Registration.js";
@@ -98,14 +99,24 @@ if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
  * 4.5️⃣ Enforce seat limit (AUTHORITATIVE)
  * This is the LAST-SEAT LOCK
  */
-const confirmedCount = await Registration.countDocuments({
-  workshopId: registration.workshopId,
-  slot: registration.slot,
-  status: REGISTRATION_STATES.CONFIRMED,
-});
+/**
+ * 4.5️⃣ ATOMIC SEAT CLAIM (SINGLE SOURCE OF TRUTH)
+ */
+const seatClaim = await Workshop.findOneAndUpdate(
+  {
+    _id: registration.workshopId,
+    [`slots.${registration.slot}.confirmed`]: {
+      $lt: MAX_SEATS_PER_SLOT,
+    },
+  },
+  {
+    $inc: { [`slots.${registration.slot}.confirmed`]: 1 },
+  },
+  { new: true }
+);
 
-if (confirmedCount >= MAX_SEATS_PER_SLOT) {
-  // ❌ Seat full → do NOT confirm
+if (!seatClaim) {
+  // ❌ Seat already full
   await transitionRegistrationState(
     registration._id,
     REGISTRATION_STATES.FAILED
@@ -118,6 +129,7 @@ if (confirmedCount >= MAX_SEATS_PER_SLOT) {
     message: "Seat limit exceeded. Payment will be refunded.",
   };
 }
+
 
 /**
  * 5️⃣ Final confirmation (SAFE)
