@@ -70,6 +70,26 @@ export async function handlePaymentCaptured(payload) {
   }
 
   /**
+ * 🔒 ENSURE WORKSHOP SLOT STRUCTURE EXISTS
+ * Defensive init for legacy / missing data
+ */
+await Workshop.updateOne(
+  {
+    _id: registration.workshopId,
+    slots: { $exists: false },
+  },
+  {
+    $set: {
+      slots: {
+        SLOT_1: { confirmed: 0 },
+        SLOT_2: { confirmed: 0 },
+      },
+    },
+  }
+);
+
+
+  /**
    * 3️⃣ Idempotency guard — already fully confirmed
    */
   if (registration.status === REGISTRATION_STATES.CONFIRMED) {
