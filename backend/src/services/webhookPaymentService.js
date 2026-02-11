@@ -70,15 +70,14 @@ export async function handlePaymentCaptured(payload) {
   }
 
   // 🔒 HARD TERMINAL GUARD (PRODUCTION SAFE)
-if (
-  registration.status === REGISTRATION_STATES.FAILED ||
-  registration.status === REGISTRATION_STATES.CANCELLED
-) {
+// 🔒 Terminal guard (but allow FAILED → PAID recovery)
+if (registration.status === REGISTRATION_STATES.CONFIRMED) {
   return {
-    success: false,
-    message: "Registration already terminal. Ignoring webhook.",
+    success: true,
+    message: "Already confirmed",
   };
 }
+
 
 
   /**
@@ -104,18 +103,7 @@ await Workshop.updateOne(
   /**
    * 3️⃣ Idempotency guard — already fully confirmed
    */
-// 🔒 HARD TERMINAL GUARD
-if (
-  registration.status === REGISTRATION_STATES.CONFIRMED ||
-  registration.status === REGISTRATION_STATES.FAILED ||
-  registration.status === REGISTRATION_STATES.CANCELLED
-) {
-  return {
-    success: true,
-    message: "Registration already terminal. Ignoring webhook.",
-  };
-}
-
+ 
 
   /**
    * 4️⃣ Transition PAYMENT_INIT → PAID
