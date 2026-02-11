@@ -37,10 +37,10 @@ export async function createPayment(payload) {
    */
 
   // Idempotency: one payment per Razorpay order
- const existing = await Payment.findOne({
+const existing = await Payment.findOne({
   razorpay_order_id: payload.razorpay_order_id,
-  status: { $ne: PAYMENT_STATES.FAILED },
 });
+
 
 if (existing) {
   return existing;
