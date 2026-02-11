@@ -55,9 +55,10 @@ const ALLOWED_TRANSITIONS = Object.freeze({
     // Terminal state — no transitions allowed
   ],
 
-  [REGISTRATION_STATES.FAILED]: [
-    // Terminal state — no transitions allowed
-  ],
+ [REGISTRATION_STATES.FAILED]: [
+  REGISTRATION_STATES.PAID,   // allow retry recovery
+],
+
 });
 
 /**
