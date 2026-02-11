@@ -237,9 +237,10 @@ export default function Register() {
   setIsPaying(false);
 
   // Redirect user to trust layer (backend-confirmed page)
-  window.location.replace(
-    `/payment-pending?orderId=${response.razorpay_order_id}`
-  );
+window.location.replace(
+  `/payment-status/${response.razorpay_order_id}`
+);
+
 },
 
 

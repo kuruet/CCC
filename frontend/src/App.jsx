@@ -44,7 +44,9 @@ const App = () => {
           PAYMENT TRUST LAYER (PUBLIC, ISOLATED)
          ===================== */}
       <Route path="/payment-pending" element={<PaymentPending />} />
-      <Route path="/payment-status" element={<PaymentStatus />} />
+      {/* <Route path="/payment-status" element={<PaymentStatus />} /> */}
+      {/* <Route path="/payment-success" element={<PaymentStatus />} /> */}
+
       <Route path="/payment-status/:orderId" element={<PaymentStatus />} />
 
       {/* =====================
