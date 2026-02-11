@@ -71,6 +71,8 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/registrations", registrationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api", publicRoutes);
+
 
 /**
  * =========================
