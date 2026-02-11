@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 /**
  * PaymentStatus (PRODUCTION-READY)
@@ -16,11 +16,9 @@ const POLL_INTERVAL_MS = 3000;      // 3 seconds
 const MAX_POLL_TIME_MS = 2 * 60 * 1000; // 2 minutes
 
 const PaymentStatus = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+   const navigate = useNavigate();
 
-  const orderId = searchParams.get("orderId");
-
+const { orderId } = useParams();
   const [status, setStatus] = useState("CHECKING"); // CHECKING | CONFIRMED | FAILED
   const [error, setError] = useState(null);
 
