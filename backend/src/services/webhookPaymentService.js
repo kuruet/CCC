@@ -116,12 +116,16 @@ await Workshop.updateOne(
 
 let updatedRegistration = registration;
 
-if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
+if (
+  registration.status === REGISTRATION_STATES.PAYMENT_INIT ||
+  registration.status === REGISTRATION_STATES.FAILED
+) {
   updatedRegistration = await transitionRegistrationState(
     registration._id,
     REGISTRATION_STATES.PAID
   );
 }
+
 
 
 /**
@@ -156,45 +160,30 @@ const seatClaim = await Workshop.findOneAndUpdate(
 
 
 // If seat claim failed OR registration already terminal, stop
-if (!seatClaim || registration.status === REGISTRATION_STATES.CONFIRMED) {
-  return {
-    success: false,
-    message: "Seat already processed or limit reached.",
-  };
-}
+ 
+
 
 
 if (!seatClaim) {
-  /**
-   * Seat full AFTER payment capture
-   * This is a BOOKING cancellation, not a payment failure
-   */
- await transitionRegistrationState(
-  updatedRegistration._id,
-  REGISTRATION_STATES.CONFIRMED
-);
-
-
-  // ❌ DO NOT mark payment failed
-  // Payment is already PAID at Razorpay
-  // Refund should be handled separately
+  await transitionRegistrationState(
+    updatedRegistration._id,
+    REGISTRATION_STATES.CANCELLED
+  );
 
   return {
     success: false,
-    message:
-      "Seat limit exceeded. Booking cancelled. Refund will be processed.",
+    message: "Seat limit exceeded. Booking cancelled.",
   };
 }
-
-
 
 /**
  * 5️⃣ Final confirmation (SAFE)
  */
 await transitionRegistrationState(
-  registration._id,
+  updatedRegistration._id,
   REGISTRATION_STATES.CONFIRMED
 );
+
 
 
 
