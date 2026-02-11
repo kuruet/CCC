@@ -22,7 +22,7 @@ import Registration from "../models/Registration.js";
  *
  * Used by:
  * - PaymentStatus.jsx
- * - PaymentPending.jsx (optional polling)
+ * - PaymentPending.jsx
  */
 export const getPaymentStatus = async (req, res) => {
   try {
@@ -31,10 +31,14 @@ export const getPaymentStatus = async (req, res) => {
     if (!orderId) {
       return res.status(400).json({
         success: false,
+        status: "INVALID_REQUEST",
         message: "Missing payment order ID",
       });
     }
 
+    /**
+     * 1️⃣ Fetch payment
+     */
     const payment = await Payment.findOne({
       razorpay_order_id: orderId,
     }).lean();
@@ -47,12 +51,15 @@ export const getPaymentStatus = async (req, res) => {
       });
     }
 
+    /**
+     * 2️⃣ Fetch linked registration (if any)
+     */
     const registration = await Registration.findOne({
       paymentId: payment._id,
     }).lean();
 
     /**
-     * Payment failed / cancelled
+     * 3️⃣ HARD TERMINAL: Payment failed or refunded
      */
     if (
       payment.status === "FAILED" ||
@@ -68,46 +75,23 @@ export const getPaymentStatus = async (req, res) => {
     }
 
     /**
-     * Payment done but booking not yet confirmed
-     * (webhook pending / reconciliation running)
+     * 4️⃣ HARD TERMINAL: Booking cancelled after payment (seat full)
      */
     if (
-      payment.status === "PAID" ||
-      payment.status === "SUCCESS"
+      registration &&
+      registration.status === "CANCELLED"
     ) {
-      if (
-        !registration ||
-        registration.status !== "CONFIRMED"
-      ) {
-        return res.json({
-          success: true,
-          status: "CONFIRMING",
-          paymentStatus: payment.status,
-          message:
-            "Payment received. Your booking is being confirmed.",
-        });
-      }
+      return res.json({
+        success: false,
+        status: "CANCELLED",
+        paymentStatus: payment.status,
+        message:
+          "Payment was successful but the workshop was full. Your booking was cancelled and a refund will be processed.",
+      });
     }
 
-
     /**
- * Booking cancelled after payment (seat full)
- */
-if (
-  registration &&
-  registration.status === "CANCELLED"
-) {
-  return res.json({
-    success: false,
-    status: "CANCELLED",
-    paymentStatus: payment.status,
-    message:
-      "Payment was successful but the workshop was full. Your booking was cancelled and a refund will be processed.",
-  });
-}
-
-    /**
-     * Booking fully confirmed
+     * 5️⃣ HARD TERMINAL: Booking confirmed
      */
     if (
       registration &&
@@ -124,7 +108,23 @@ if (
     }
 
     /**
-     * Fallback (should rarely happen)
+     * 6️⃣ TRANSITIONAL: Payment done, webhook still processing
+     */
+    if (
+      payment.status === "PAID" ||
+      payment.status === "SUCCESS"
+    ) {
+      return res.json({
+        success: true,
+        status: "CONFIRMING",
+        paymentStatus: payment.status,
+        message:
+          "Payment received. Your booking is being confirmed.",
+      });
+    }
+
+    /**
+     * 7️⃣ Fallback (should be rare)
      */
     return res.json({
       success: true,
@@ -134,12 +134,10 @@ if (
         "Your payment is being processed. Please wait.",
     });
   } catch (error) {
-    console.error(
-      "❌ Payment status check error:",
-      error
-    );
+    console.error("❌ Payment status check error:", error);
     return res.status(500).json({
       success: false,
+      status: "SERVER_ERROR",
       message:
         "Unable to fetch payment status. Please try again shortly.",
     });

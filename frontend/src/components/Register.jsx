@@ -348,7 +348,7 @@ export default function Register() {
                     Live Interactive Session
                   </h3>
                   <p className="text-sm sm:text-base text-[#8A733E]/70">
-                    8 hours of hands-on learning with real-time feedback
+                    6 hours of hands-on learning with real-time feedback
                   </p>
                 </div>
               </div>
@@ -399,7 +399,7 @@ export default function Register() {
             <div className="pt-6 sm:pt-8 border-t border-[#8A733E]/20">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#8A733E]">8 Hours</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#8A733E]">6 Hours</div>
                   <div className="text-sm sm:text-base text-[#8A733E]/60 mt-1">Duration</div>
                 </div>
                 <div>
@@ -641,8 +641,8 @@ export default function Register() {
                           Slot 1
                         </div>
                         <div className="text-sm text-[#8A733E]/70">
-                          Saturday: 12 PM – 4 PM<br />
-                          Sunday: 12 PM – 4 PM
+                         14 march : Saturday: 12 PM – 3 PM<br />
+                         15 march :  Sunday: 12 PM – 3 PM
                         </div>
                       </div>
                       <div className="text-right">
@@ -679,8 +679,8 @@ export default function Register() {
                           Slot 2
                         </div>
                         <div className="text-sm text-[#8A733E]/70">
-                          Saturday: 6 PM – 10 PM<br />
-                          Sunday: 6 PM – 10 PM
+                         14 March : Saturday: 6 PM – 9 PM<br />
+                         15 march : Sunday: 6 PM – 9 PM
                         </div>
                       </div>
                       <div className="text-right">

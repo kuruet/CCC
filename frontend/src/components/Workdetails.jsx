@@ -7,12 +7,12 @@ export default function Workdetails() {
     },
     {
       label: 'Time',
-      value: '12:00 PM - 4:00 PM ',
+      value: '12:00 PM - 3:00 PM ',
       clarifier: 'IST (Indian Standard Time)'
     },
     {
       label: 'Duration',
-      value: '8 Hours',
+      value: '6 Hours',
       clarifier: 'Includes breaks and Q&A'
     },
     {

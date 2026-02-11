@@ -7,7 +7,7 @@ export const registrationConfirmationTemplate = ({
   slot,
 }) => {
   const slotTiming =
-    slot === "SLOT_1" ? "12:00 PM – 4:00 PM" : "6:00 PM – 10:00 PM";
+    slot === "SLOT_1" ? "12:00 PM – 3:00 PM" : "6:00 PM – 9:00 PM";
 
   return `
   <!DOCTYPE html>

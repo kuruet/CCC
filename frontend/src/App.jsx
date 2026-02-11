@@ -71,7 +71,7 @@ const App = () => {
       {/* =====================
           SAFE FALLBACK (NO LOGIN REDIRECT)
          ===================== */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
     </Routes>
   );
 };
