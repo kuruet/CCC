@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 /**
  * PaymentStatus (PRODUCTION-READY)
@@ -16,8 +16,7 @@ const POLL_INTERVAL_MS = 3000;      // 3 seconds
 const MAX_POLL_TIME_MS = 2 * 60 * 1000; // 2 minutes
 
 const PaymentStatus = () => {
-   const navigate = useNavigate();
-
+ 
 const { orderId } = useParams();
   const [status, setStatus] = useState("CHECKING"); // CHECKING | CONFIRMED | FAILED
   const [error, setError] = useState(null);
@@ -48,10 +47,11 @@ const { orderId } = useParams();
 
 
         if (data.status === "CONFIRMED") {
-          setStatus("CONFIRMED");
-          clearInterval(interval);
-          navigate("/payment-success", { replace: true });
-        }
+  setStatus("CONFIRMED");
+  clearInterval(interval);
+  return;
+}
+
 
         if (data.status === "FAILED" || data.status === "CANCELLED") {
           setStatus("FAILED");
@@ -76,9 +76,20 @@ const { orderId } = useParams();
     const interval = setInterval(pollStatus, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [orderId, navigate, API_BASE_URL]);
+}, [orderId, API_BASE_URL]);
 
   // ---------------- UI STATES ----------------
+
+  if (status === "CONFIRMED") {
+  return (
+    <StatusLayout
+      title="Booking Confirmed 🎉"
+      message="Your seat has been successfully reserved."
+      subMessage="A confirmation email has been sent to your registered email."
+      showSpinner={false}
+    />
+  );
+}
 
   if (status === "FAILED") {
     return (
@@ -100,6 +111,9 @@ const { orderId } = useParams();
     />
   );
 };
+
+ 
+
 
 // ---------------- UI LAYOUT ----------------
 
