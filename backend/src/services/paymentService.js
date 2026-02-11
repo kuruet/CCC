@@ -101,12 +101,12 @@ export async function markPaymentPaid({
   }
 
   // Idempotent: already paid
-  if (
-    payment.status === PAYMENT_STATES.PAID ||
-    payment.status === "SUCCESS"
-  ) {
+  if (payment.status === PAYMENT_STATES.PAID) {
     return payment;
   }
+
+  // 🔥 IMPORTANT FIX:
+  // Allow FAILED → PAID recovery (retry case)
 
   payment.razorpay_payment_id = razorpay_payment_id;
   payment.razorpay_signature = razorpay_signature;
@@ -115,8 +115,10 @@ export async function markPaymentPaid({
   payment.lastStatusUpdatedAt = new Date();
 
   await payment.save();
+
   return payment;
 }
+
 
 /**
  * Mark payment as failed.
