@@ -104,12 +104,18 @@ await Workshop.updateOne(
   /**
    * 3️⃣ Idempotency guard — already fully confirmed
    */
-  if (registration.status === REGISTRATION_STATES.CONFIRMED) {
-    return {
-      success: true,
-      message: "Registration already confirmed",
-    };
-  }
+// 🔒 HARD TERMINAL GUARD
+if (
+  registration.status === REGISTRATION_STATES.CONFIRMED ||
+  registration.status === REGISTRATION_STATES.FAILED ||
+  registration.status === REGISTRATION_STATES.CANCELLED
+) {
+  return {
+    success: true,
+    message: "Registration already terminal. Ignoring webhook.",
+  };
+}
+
 
   /**
    * 4️⃣ Transition PAYMENT_INIT → PAID
@@ -134,6 +140,15 @@ if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
 /**
  * 4.5️⃣ ATOMIC SEAT CLAIM (SINGLE SOURCE OF TRUTH)
  */
+
+if (registration.status !== REGISTRATION_STATES.PAID) {
+  return {
+    success: true,
+    message: "Already processed",
+  };
+}
+
+
 const seatClaim = await Workshop.findOneAndUpdate(
   {
     _id: registration.workshopId,
@@ -146,6 +161,15 @@ const seatClaim = await Workshop.findOneAndUpdate(
   },
   { new: true }
 );
+
+// If seat claim failed OR registration already terminal, stop
+if (!seatClaim || registration.status === REGISTRATION_STATES.CONFIRMED) {
+  return {
+    success: false,
+    message: "Seat already processed or limit reached.",
+  };
+}
+
 
 if (!seatClaim) {
   /**
