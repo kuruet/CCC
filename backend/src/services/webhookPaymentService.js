@@ -126,12 +126,15 @@ if (
  */
 // Ensure valid state progression enforced by state machine
 
+let updatedRegistration = registration;
+
 if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
-  await transitionRegistrationState(
+  updatedRegistration = await transitionRegistrationState(
     registration._id,
     REGISTRATION_STATES.PAID
   );
 }
+
 
 /**
  * 4.5️⃣ Enforce seat limit (AUTHORITATIVE)
@@ -141,7 +144,7 @@ if (registration.status === REGISTRATION_STATES.PAYMENT_INIT) {
  * 4.5️⃣ ATOMIC SEAT CLAIM (SINGLE SOURCE OF TRUTH)
  */
 
-if (registration.status !== REGISTRATION_STATES.PAID) {
+if (updatedRegistration.status !== REGISTRATION_STATES.PAID) {
   return {
     success: true,
     message: "Already processed",
@@ -149,18 +152,20 @@ if (registration.status !== REGISTRATION_STATES.PAID) {
 }
 
 
+
 const seatClaim = await Workshop.findOneAndUpdate(
   {
-    _id: registration.workshopId,
-    [`slots.${registration.slot}.confirmed`]: {
+    _id: updatedRegistration.workshopId,
+    [`slots.${updatedRegistration.slot}.confirmed`]: {
       $lt: MAX_SEATS_PER_SLOT,
     },
   },
   {
-    $inc: { [`slots.${registration.slot}.confirmed`]: 1 },
+    $inc: { [`slots.${updatedRegistration.slot}.confirmed`]: 1 },
   },
   { new: true }
 );
+
 
 // If seat claim failed OR registration already terminal, stop
 if (!seatClaim || registration.status === REGISTRATION_STATES.CONFIRMED) {
@@ -176,10 +181,11 @@ if (!seatClaim) {
    * Seat full AFTER payment capture
    * This is a BOOKING cancellation, not a payment failure
    */
-  await transitionRegistrationState(
-    registration._id,
-    REGISTRATION_STATES.CANCELLED
-  );
+ await transitionRegistrationState(
+  updatedRegistration._id,
+  REGISTRATION_STATES.CONFIRMED
+);
+
 
   // ❌ DO NOT mark payment failed
   // Payment is already PAID at Razorpay
