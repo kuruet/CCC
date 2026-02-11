@@ -69,6 +69,18 @@ export async function handlePaymentCaptured(payload) {
     );
   }
 
+  // 🔒 HARD TERMINAL GUARD (PRODUCTION SAFE)
+if (
+  registration.status === REGISTRATION_STATES.FAILED ||
+  registration.status === REGISTRATION_STATES.CANCELLED
+) {
+  return {
+    success: false,
+    message: "Registration already terminal. Ignoring webhook.",
+  };
+}
+
+
   /**
  * 🔒 ENSURE WORKSHOP SLOT STRUCTURE EXISTS
  * Defensive init for legacy / missing data
