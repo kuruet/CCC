@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 
 import PaymentPending from "./pages/PaymentPending";
 import PaymentStatus from "./pages/PaymentStatus";
+import PaymentCancelled from "./pages/PaymentCancelled";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -48,6 +49,8 @@ const App = () => {
       {/* <Route path="/payment-success" element={<PaymentStatus />} /> */}
 
       <Route path="/payment-status/:orderId" element={<PaymentStatus />} />
+      <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+
 
       {/* =====================
           ADMIN ROUTES (PROTECTED)

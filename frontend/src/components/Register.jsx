@@ -250,7 +250,8 @@ window.location.replace(
     setIsPaying(false);
 
     // Explicit cancellation
-    window.location.href = `/payment-cancelled`;
+window.location.replace("/payment-cancelled");
+
   },
 },
 
