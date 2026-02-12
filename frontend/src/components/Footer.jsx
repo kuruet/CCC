@@ -198,6 +198,15 @@ const Footer = () => {
           <div className="text-center morion-text text-sm" style={{ color: '#FFF5DF' }}>
             ©2026 CreativeCaricatureClub. All Rights Reserved.
           </div>
+          <div className="mt-6 text-center text-sm">
+  <p style={{ color: "#FFF5DF" }}>
+    Designed & Developed by{" "}
+    <span  className="font-semibold italic tracking-wide" style={{ color: "#CDB885" }}>
+      kuruet
+    </span>
+  </p>
+</div>
+
         </div>
 
         {/* Back to Top Button */}
