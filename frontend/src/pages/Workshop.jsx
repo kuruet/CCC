@@ -7,9 +7,10 @@ import Footer from "../components/Footer";
  import Learn from "../components/Learn";
 import FAQ from "../components/FAQ";
 import VideoHero from "../components/VideoHero";
+import Brochure from "../components/Brochure";
 
 
- 
+
 
 const About = ()=> {
     return (
@@ -19,7 +20,10 @@ const About = ()=> {
              <Divider/>
              <Instructor/>
              <Divider/>
+              <Brochure/>
+               <Divider/>
              <Workdetails/>
+             
               <Learn/>
               <VideoHero/>
               <FAQ/>
