@@ -28,14 +28,14 @@ export default function VideoHero() {
           Transform Your Passion Into Professional Artistry
         </h2>
 
-        {/* <button
+        <button
         onClick={handleRegisterClick}
 
           aria-label="Register for Workshop"
           className="px-8 sm:px-10 md:px-12 py-4 sm:py-5 text-base sm:text-lg md:text-xl font-semibold text-[#FFF5DF] bg-[#8A733E] rounded-lg hover:bg-[#8A733E]/90 focus:outline-none focus:ring-4 focus:ring-[#8A733E]/50 transform hover:scale-105 active:scale-95 transition-all duration-300"
         >
           Register Now
-        </button> */}
+        </button>
       </div>
     </section>
   );

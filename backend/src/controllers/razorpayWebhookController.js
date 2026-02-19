@@ -48,6 +48,8 @@ export const razorpayWebhookHandler = async (req, res) => {
     return res.json({ status: "ignored_event" });
   } catch (error) {
     console.error("🔥 Razorpay webhook error:", error);
-    return res.status(500).send("Webhook error");
+    // ⚠️ Never return 500 to Razorpay once signature is valid
+return res.status(200).json({ status: "error_logged" });
+
   }
 };

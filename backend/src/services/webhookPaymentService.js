@@ -55,6 +55,15 @@ export async function handlePaymentCaptured(payload) {
     method,
   });
 
+  if (!payment) {
+  // Unknown order — log already handled in paymentService
+  return {
+    success: true,
+    ignored: true,
+  };
+}
+
+
   /**
    * 2️⃣ Fetch linked registration
    */

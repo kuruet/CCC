@@ -97,8 +97,13 @@ export async function markPaymentPaid({
   const payment = await Payment.findOne({ razorpay_order_id });
 
   if (!payment) {
-    throw new Error("Payment not found for order");
-  }
+  console.error(
+    "⚠️ Webhook received for unknown order:",
+    razorpay_order_id
+  );
+  return null; // 🔒 Do NOT throw (transport-safe)
+}
+
 
   // Idempotent: already paid
   if (payment.status === PAYMENT_STATES.PAID) {

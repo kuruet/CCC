@@ -38,11 +38,11 @@ export default function Hero() {
             </p>
 
             <div className="space-y-3 pt-2">
-              {/* <button 
+              <button 
               onClick={handleRegisterClick}
               className="w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-4 sm:py-4.5 lg:py-5 text-base sm:text-lg lg:text-xl font-semibold text-[#FFF5DF] bg-[#8A733E] rounded-lg hover:bg-[#8A733E]/90 focus:outline-none focus:ring-4 focus:ring-[#8A733E]/30 transform hover:scale-105 active:scale-95 transition-all duration-300">
                 Register for ₹1999
-              </button> */}
+              </button>
 
               <p className="text-xs sm:text-sm text-[#8A733E]/60 pl-1">
                 Instant confirmation • Secure payment
