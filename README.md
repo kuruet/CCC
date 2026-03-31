@@ -133,41 +133,6 @@ Handles:
 
 ---
 
-## 📂 Project Structure
-
-CCC/
-│
-├── backend/
-│ ├── src/
-│ │ ├── controllers/ # Request handlers
-│ │ ├── services/ # Core business logic
-│ │ ├── routes/ # API routes
-│ │ ├── models/ # Database schemas
-│ │ ├── middlewares/ # Auth & validation
-│ │ ├── utils/ # Helper functions
-│ │ ├── config/ # DB & external configs
-│ │ └── jobs/ # Background jobs (if any)
-│ │
-│ └── server.js
-│
-├── frontend/
-│ ├── src/
-│ │ ├── pages/ # Page-level components
-│ │ ├── components/ # Reusable UI components
-│ │ ├── sections/ # Artists / Services / Workshop UI
-│ │ ├── services/ # API integration layer
-│ │ ├── hooks/ # Custom React hooks
-│ │ ├── context/ # Global state (if used)
-│ │ ├── utils/ # Helper functions
-│ │ └── assets/ # Images / static files
-│ │
-│ └── public/
-│
-└── README.md
-
-
----
-
 ## 🔄 System Workflow
 
 ### 🧠 User Flow
@@ -203,16 +168,30 @@ CCC/
 }
 📸 Screenshots
 
-Add your screenshots here:
 
 🏠 Landing Page
-🎭 Artists Section
-🛠️ Services Section
-🎟️ Workshop Booking
-💳 Payment Flow
-🛠️ Admin Dashboard
 
-⚙️ Setup Instructions
+<img width="1913" height="981" alt="image" src="https://github.com/user-attachments/assets/6be46576-cd9e-4cb5-9f4c-926bf6d08ff0" />
+
+🎭 Artists Section
+
+<img width="1902" height="974" alt="image" src="https://github.com/user-attachments/assets/9d56f08c-b82c-4870-a678-5042184ff456" />
+
+
+🛠️ Services Section
+
+<img width="1897" height="990" alt="image" src="https://github.com/user-attachments/assets/fa8557f3-5eb4-452c-93f9-eaf0db79aa02" />
+
+🎟️ Workshop Booking
+<img width="1904" height="996" alt="image" src="https://github.com/user-attachments/assets/b4575f82-a3cf-4d20-a74a-00407b1175e2" />
+
+
+🛠️ Deployments Logs
+
+<img width="1600" height="805" alt="image" src="https://github.com/user-attachments/assets/805545ca-470f-4c91-977c-ba065a0abed0" />
+
+
+
 1️⃣ Clone Repository
 git clone https://github.com/kuruet/CCC.git
 cd CCC
