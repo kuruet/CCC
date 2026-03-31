@@ -151,21 +151,6 @@ Handles:
    - ❌ CANCELLED (if full)  
 6. Email sent  
 
----
-
-## 🗄️ Database Schema
-
-### Workshop
-```js
-{
-  title,
-  price,
-  date,
-  slots: {
-    SLOT_1: { confirmed: Number },
-    SLOT_2: { confirmed: Number }
-  }
-}
 
 
 📸 Screenshots
