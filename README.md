@@ -166,6 +166,8 @@ Handles:
     SLOT_2: { confirmed: Number }
   }
 }
+
+
 📸 Screenshots
 
 
